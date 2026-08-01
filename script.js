@@ -1,78 +1,8 @@
 let db = null;
 let SQL_module = null;
 
-const CHINA_DATA = [
-  ['约前2070', -2070, '夏朝建立', '中国第一个王朝，世袭制开端', null, '👑'],
-  ['约前1600', -1600, '商汤灭夏', '青铜文明与甲骨文的辉煌', null, '🏺'],
-  ['约前1046', -1046, '武王伐纣', '周朝建立，分封制与礼乐制', null, '⚔️'],
-  ['前770',    -770,  '平王东迁', '东周开始，春秋争霸', null, '🏯'],
-  ['前551',    -551,  '孔子诞生', '儒家思想创始人', 'img/kongzi.jpg', '📚'],
-  ['前221',    -221,  '秦统一六国', '书同文，车同轨，郡县制', 'img/qinshihuang.jpg', '🏯'],
-  ['前202',    -202,  '汉朝建立', '刘邦称帝，大一统盛世', null, '🐉'],
-  ['105',      105,   '蔡伦造纸', '改良造纸术，影响世界', null, '📜'],
-  ['220',      220,   '三国鼎立', '魏蜀吴三分天下', null, '⚔️'],
-  ['618',      618,   '大唐建立', '贞观之治，万国来朝', 'img/lisimin.jpg', '👑'],
-  ['960',      960,   '北宋建立', '重文轻武，科技昌盛', null, '📖'],
-  ['1271',     1271,  '元朝建立', '忽必烈定国号为大元', null, '🐎'],
-  ['1368',     1368,  '明朝建立', '朱元璋驱逐蒙元', 'img/zhuyuanzhang.jpg', '🏯'],
-  ['1405',     1405,  '郑和下西洋', '七下西洋，航海壮举', 'img/zhenghe.jpg', '⛵'],
-  ['1644',     1644,  '清军入关', '明朝灭亡，清朝统治开始', null, '🏹'],
-  ['1840',     1840,  '鸦片战争', '近代史开端，国门被打开', null, '⚓'],
-  ['1912',     1912,  '中华民国', '两千多年帝制终结', null, '🌅'],
-  ['1949',     1949,  '新中国成立', '中华人民共和国成立', null, '🇨🇳'],
-  ['1978',     1978,  '改革开放', '现代化建设的新纪元', null, '🚀'],
-  ['2008',     2008,  '北京奥运', '百年奥运梦圆北京', null, '🏅'],
-];
-
-const WORLD_DATA = [
-  ['约前3500', -3500, '两河文明', '苏美尔人发明楔形文字', null, '📝'],
-  ['约前3100', -3100, '古埃及统一', '美尼斯统一上下埃及', null, '🔺'],
-  ['约前2560', -2560, '胡夫金字塔', '古代世界七大奇迹之一', null, '🏔️'],
-  ['约前776',  -776,  '首届奥运会', '古希腊奥林匹亚竞技会', null, '🏃'],
-  ['前509',    -509,  '罗马共和国', '罗马建立共和政体', null, '🏛️'],
-  ['前336',    -336,  '亚历山大东征', '横跨欧亚非的帝国', null, '🐎'],
-  ['前27',     -27,   '罗马帝国', '屋大维称帝，Pax Romana', null, '👑'],
-  ['476',      476,   '西罗马灭亡', '欧洲进入中世纪', null, '🏚️'],
-  ['622',      622,   '伊斯兰兴起', '穆罕默德创立伊斯兰教', null, '🌙'],
-  ['800',      800,   '查理曼加冕', '查理曼帝国建立', null, '👑'],
-  ['1096',     1096,  '十字军东征', '持续近两百年的宗教战争', null, '🛡️'],
-  ['1453',     1453,  '君士坦丁堡陷落', '拜占庭帝国灭亡', null, '🏰'],
-  ['1492',     1492,  '发现新大陆', '哥伦布到达美洲', 'img/columbus.jpg', '🧭'],
-  ['1517',     1517,  '宗教改革', '马丁·路德发表论纲', null, '📖'],
-  ['1687',     1687,  '牛顿力学', '《自然哲学的数学原理》', 'img/newton.jpg', '🍎'],
-  ['1707',     1707,  '英国建国', '英格兰与苏格兰合并，大不列颠王国成立', null, '🇬🇧'],
-  ['1769',     1769,  '蒸汽机改良', '瓦特推动工业革命', null, '⚙️'],
-  ['1776',     1776,  '美国建国', '《独立宣言》发表，美利坚合众国成立', null, '🇺🇸'],
-  ['1789',     1789,  '法国大革命', '自由、平等、博爱', 'img/napoleon.jpg', '🗽'],
-  ['1871',     1871,  '德国建国', '普鲁士统一德意志，德意志帝国成立', null, '🇩🇪'],
-  ['1879',     1879,  '电灯发明', '爱迪生点亮世界', 'img/edison.jpg', '💡'],
-  ['1914',     1914,  '第一次世界大战', '改变世界格局的大战', null, '💥'],
-  ['1945',     1945,  '二战结束', '联合国成立，新秩序建立', null, '🕊️'],
-  ['1969',     1969,  '人类登月', '阿姆斯特朗踏上月球', 'img/armstrong.jpg', '🌙'],
-  ['1989',     1989,  '万维网诞生', '互联网改变世界', null, '🌐'],
-  ['2023',     2023,  'AI大模型时代', '生成式AI改变未来', null, '🤖'],
-];
-
-const DYNASTY_DATA = [
-  ['史前',   -4000, -2070, '#B5C4B1'],
-  ['夏',     -2070, -1600, '#D4B896'],
-  ['商',     -1600, -1046, '#C88E5A'],
-  ['周',     -1046, -256,  '#9FCF6B'],
-  ['秦',     -221,  -207,  '#E85D5D'],
-  ['汉',     -202,  220,   '#F0B840'],
-  ['三国',   220,   280,   '#D9A87A'],
-  ['晋',     265,   420,   '#8BB8D4'],
-  ['南北朝', 420,   589,   '#B49AE0'],
-  ['隋',     581,   618,   '#E88AB0'],
-  ['唐',     618,   907,   '#FFA050'],
-  ['五代',   907,   960,   '#C0A050'],
-  ['宋',     960,   1279,  '#6BB5D9'],
-  ['元',     1271,  1368,  '#6A9080'],
-  ['明',     1368,  1644,  '#E05050'],
-  ['清',     1644,  1912,  '#8060C0'],
-  ['民国',   1912,  1949,  '#40A0A0'],
-  ['新中国', 1949,  2026,  '#E85060'],
-];
+// 数据统一存储在 timeline.sqlite 中，本文件不再保留冗余数据副本。
+// 修改历史事件/朝代请直接编辑数据库文件。
 
 // ── 动态加载 sql.js ──
 const SQL_CDN_BASES = [
@@ -113,64 +43,34 @@ async function initDB() {
     locateFile: f => loadedBase === 'local' ? f : loadedBase + f
   });
 
-  loadingDetail.textContent = '尝试加载 timeline.sqlite…';
+  loadingDetail.textContent = '加载 timeline.sqlite…';
+  let resp;
   try {
-    const resp = await fetch('timeline.sqlite');
-    if (resp.ok) {
-      const buf = await resp.arrayBuffer();
-      db = new SQL_module.Database(new Uint8Array(buf));
-      const test = db.exec("SELECT count(*) FROM events");
-      if (test.length > 0) {
-        // 检查是否有 emoji 列，没有则添加
-        try { db.exec("SELECT emoji FROM events LIMIT 1"); }
-        catch(_) {
-          db.run("ALTER TABLE events ADD COLUMN emoji TEXT");
-          const allData = [...CHINA_DATA.map(e => [...e, 'china']), ...WORLD_DATA.map(e => [...e, 'world'])];
-          const ustmt = db.prepare('UPDATE events SET emoji = ? WHERE year_num = ? AND title = ?');
-          allData.forEach(e => { ustmt.run([e[5], e[1], e[2]]); });
-          ustmt.free();
-        }
-        loadingDetail.textContent = '数据库加载完成';
-        return;
-      }
-    }
-  } catch(e) {}
-
-  loadingDetail.textContent = '创建内存数据库…';
-  db = new SQL_module.Database();
-  db.run(`CREATE TABLE events (id INTEGER PRIMARY KEY AUTOINCREMENT, year_label TEXT NOT NULL, year_num INTEGER NOT NULL, title TEXT NOT NULL, description TEXT, type TEXT NOT NULL DEFAULT 'china', image TEXT, emoji TEXT)`);
-  db.run(`CREATE TABLE dynasties (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, start_year INTEGER NOT NULL, end_year INTEGER NOT NULL, color TEXT NOT NULL)`);
-
-  const stmt = db.prepare('INSERT INTO events (year_label, year_num, title, description, type, image, emoji) VALUES (?,?,?,?,?,?,?)');
-  CHINA_DATA.forEach(e => { stmt.run([e[0], e[1], e[2], e[3], 'china', e[4], e[5]]); });
-  WORLD_DATA.forEach(e => { stmt.run([e[0], e[1], e[2], e[3], 'world', e[4], e[5]]); });
-  stmt.free();
-
-  const stmt2 = db.prepare('INSERT INTO dynasties (name, start_year, end_year, color) VALUES (?,?,?,?)');
-  DYNASTY_DATA.forEach(d => { stmt2.run(d); });
-  stmt2.free();
-  loadingDetail.textContent = '数据库已就绪';
+    resp = await fetch('timeline.sqlite');
+  } catch(_) {
+    throw new Error('无法读取数据库文件，请通过本地服务器或 GitHub Pages 访问（直接双击打开无效）');
+  }
+  if (!resp.ok) {
+    throw new Error(`无法加载数据库 (HTTP ${resp.status})`);
+  }
+  const buf = await resp.arrayBuffer();
+  db = new SQL_module.Database(new Uint8Array(buf));
+  const test = db.exec("SELECT count(*) FROM events");
+  if (!test.length) {
+    throw new Error('数据库为空或已损坏');
+  }
+  loadingDetail.textContent = '数据库加载完成';
 }
 
 function queryEvents(type) {
   const results = [];
-  try {
-    const stmt = db.prepare(
-      `SELECT year_label AS year, year_num AS yearNum, title, description AS "desc", image, emoji
-       FROM events WHERE type = ? ORDER BY year_num`
-    );
-    stmt.bind([type]);
-    while (stmt.step()) { results.push(stmt.getAsObject()); }
-    stmt.free();
-  } catch(_) {
-    const stmt = db.prepare(
-      `SELECT year_label AS year, year_num AS yearNum, title, description AS "desc", image
-       FROM events WHERE type = ? ORDER BY year_num`
-    );
-    stmt.bind([type]);
-    while (stmt.step()) { results.push({...stmt.getAsObject(), emoji: null}); }
-    stmt.free();
-  }
+  const stmt = db.prepare(
+    `SELECT year_label AS year, year_num AS yearNum, title, description AS "desc", image, emoji
+     FROM events WHERE type = ? ORDER BY year_num`
+  );
+  stmt.bind([type]);
+  while (stmt.step()) { results.push(stmt.getAsObject()); }
+  stmt.free();
   return results;
 }
 
