@@ -33,6 +33,15 @@ html, body {
   user-select: none;
 }
 
+/* ── 星空背景 ── */
+#starfield {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  z-index: 0;
+  pointer-events: none;
+}
+
 /* ── 圆点纹理背景 ── */
 body::before {
   content: '';
@@ -43,16 +52,16 @@ body::before {
     radial-gradient(circle at 85% 80%, rgba(232,93,93,0.05), transparent 40%),
     radial-gradient(circle at 50% 50%, rgba(74,144,217,0.04), transparent 50%);
   pointer-events: none;
-  z-index: 0;
+  z-index: 1;
 }
 body::after {
   content: '';
   position: fixed;
   inset: 0;
-  background-image: radial-gradient(circle, rgba(200,180,150,0.12) 1.5px, transparent 1.5px);
+  background-image: radial-gradient(circle, rgba(200,180,150,0.06) 1.5px, transparent 1.5px);
   background-size: 28px 28px;
   pointer-events: none;
-  z-index: 0;
+  z-index: 1;
 }
 
 /* ── 顶部标题 ── */
@@ -543,7 +552,7 @@ body::after {
 .floating-deco {
   position: fixed;
   pointer-events: none;
-  z-index: 0;
+  z-index: 2;
   opacity: 0.5;
   animation: floatGentle 8s ease-in-out infinite;
 }
