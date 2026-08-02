@@ -86,7 +86,7 @@ function queryDynasties() {
 //  时间轴渲染
 // ════════════════════════════════════════════════
 const PADDING = 120;
-const TOTAL_WIDTH = 12800;
+const TOTAL_WIDTH = 25600;
 const USABLE = TOTAL_WIDTH - PADDING * 2;
 const SPLIT_YEAR = 1368;
 const RATIO_BEFORE = 0.55;
@@ -113,15 +113,25 @@ function formatYear(y) {
   return y === 0 ? '元年' : String(y);
 }
 
+// 朝代卡通 emoji 映射
+const DYNASTY_EMOJI = {
+  '史前': '🦴', '夏': '🏺', '商': '🐢', '周': '📜',
+  '秦': '⚔️', '汉': '🐉', '三国': '🗡️', '晋': '🍵',
+  '南北朝': '🏯', '隋': '🌉', '唐': '🎐', '五代十国': '🔥',
+  '宋': '🎨', '元': '🐎', '明': '🏮', '清': '👑',
+  '近代': '🚢', '现代': '🚀',
+};
+
 function buildAxis(dynasties) {
   let html = '<div class="timeline-axis">';
   dynasties.forEach(d => {
     const x1 = yearToX(d.start);
     const x2 = yearToX(d.end);
     const w = x2 - x1;
-    const showName = w > 50;
-    html += `<div class="dynasty-band" style="left:${x1}px;width:${w}px;background:${d.color};opacity:0.55;">
-      ${showName ? `<span class="dynasty-name">${d.name}</span>` : ''}
+    const showName = w > 80;
+    const emoji = DYNASTY_EMOJI[d.name] || '🏛️';
+    html += `<div class="dynasty-band" style="left:${x1}px;width:${w}px;background:${d.color};opacity:0.6;">
+      ${showName ? `<span class="dynasty-name"><span class="dynasty-emoji">${emoji}</span>${d.name}</span>` : ''}
     </div>`;
   });
   yearTicks.forEach(y => {
@@ -424,7 +434,7 @@ trackEl.addEventListener('wheel', (e) => {
 }, { passive: false });
 
 // ── 键盘导航（平滑滚动）──
-const ARROW_STEP = 250;
+const ARROW_STEP = 500;
 let arrowKey = null, arrowHoldTimer = null;
 
 document.addEventListener('keydown', (e) => {

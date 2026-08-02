@@ -264,7 +264,7 @@ body::after {
   top: 50%;
   left: 0;
   transform: translateY(-50%);
-  height: 52px;
+  height: 68px;
   width: 100%;
   z-index: 2;
   display: flex;
@@ -281,15 +281,38 @@ body::after {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  border-right: 2px solid rgba(255,255,255,0.5);
+  border-right: 2.5px dashed rgba(255,255,255,0.7);
   pointer-events: none;
 }
 .dynasty-band .dynasty-name {
   font-family: 'ZCOOL KuaiLe', sans-serif;
-  font-size: 16px;
+  font-size: 26px;
+  font-weight: 700;
   white-space: nowrap;
-  text-shadow: 0 1px 4px rgba(255,255,255,0.8), 0 0 2px rgba(255,255,255,0.6);
-  opacity: 0.85;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255,255,255,0.78);
+  padding: 5px 18px;
+  border-radius: 24px;
+  border: 3px solid rgba(255,255,255,0.95);
+  box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+  text-shadow:
+    -1.5px -1.5px 0 #fff, 1.5px -1.5px 0 #fff,
+    -1.5px 1.5px 0 #fff, 1.5px 1.5px 0 #fff,
+    0 2px 5px rgba(0,0,0,0.25);
+  opacity: 1;
+  letter-spacing: 0.06em;
+}
+.dynasty-band .dynasty-emoji {
+  font-size: 28px;
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,0.2));
+  animation: dynastyWobble 4s ease-in-out infinite;
+}
+@keyframes dynastyWobble {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(-8deg) scale(1.1); }
+  75% { transform: rotate(8deg) scale(1.1); }
 }
 
 /* 年份刻度 */
@@ -305,7 +328,7 @@ body::after {
 }
 .year-tick .tick-mark {
   width: 1.5px;
-  height: 52px;
+  height: 68px;
   background: var(--ink-soft);
   opacity: 0.15;
   position: absolute;
@@ -544,7 +567,8 @@ body::after {
   .toggle-icon { width: 32px; height: 18px; }
   .toggle-icon::after { width: 12px; height: 12px; }
   .toggle-btn.active .toggle-icon::after { left: 16px; }
-  .dynasty-band .dynasty-name { font-size: 14px; }
+  .dynasty-band .dynasty-name { font-size: 18px; padding: 3px 12px; }
+  .dynasty-band .dynasty-emoji { font-size: 20px; }
   .year-tick .tick-label { font-size: 12px; padding: 3px 8px; }
 }
 
