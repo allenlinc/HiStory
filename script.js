@@ -1,5 +1,6 @@
 let db = null;
 let SQL_module = null;
+let allEvents = [];
 
 // 数据统一存储在 timeline.sqlite 中，本文件不再保留冗余数据副本。
 // 修改历史事件/朝代请直接编辑数据库文件。
@@ -177,6 +178,11 @@ function renderTimeline() {
 
   chinaEvents.forEach(e => { e.x = yearToX(e.yearNum); });
   worldEvents.forEach(e => { e.x = yearToX(e.yearNum); });
+
+  allEvents = [
+    ...chinaEvents.map(e => ({ ...e, type: 'china' })),
+    ...worldEvents.map(e => ({ ...e, type: 'world' }))
+  ];
 
   let html = '';
   html += buildAxis(dynasties);
@@ -439,6 +445,7 @@ let arrowKey = null, arrowHoldTimer = null;
 
 document.addEventListener('keydown', (e) => {
   if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+  if (document.activeElement && document.activeElement.id === 'searchInput') return;
   e.preventDefault();
   cancelMomentum();
   if (arrowKey === e.key) return;
@@ -456,6 +463,105 @@ document.addEventListener('keyup', (e) => {
     arrowKey = null;
     if (arrowHoldTimer) { clearInterval(arrowHoldTimer); arrowHoldTimer = null; }
   }
+});
+
+// ════════════════════════════════════════════════
+//  搜索功能
+// ════════════════════════════════════════════════
+const searchInput = document.getElementById('searchInput');
+const searchResults = document.getElementById('searchResults');
+const searchBtn = document.getElementById('searchBtn');
+
+function performSearch() {
+  const q = searchInput.value.trim().toLowerCase();
+  if (!q) { searchResults.classList.remove('show'); return []; }
+  const matches = allEvents.filter(e =>
+    String(e.title).toLowerCase().includes(q) ||
+    String(e.year).toLowerCase().includes(q) ||
+    String(e.desc).toLowerCase().includes(q)
+  );
+  if (matches.length === 0) {
+    searchResults.innerHTML = '<div class="search-no-result">没找到呀 😢</div>';
+    searchResults.classList.add('show');
+    return [];
+  }
+  searchResults.innerHTML = matches.map((e, i) => `
+    <div class="search-result-item" data-index="${i}">
+      <span class="result-year">${e.year}</span>
+      <span class="result-title">${e.title}</span>
+      <span class="result-type">${e.type === 'china' ? '🇨🇳' : '🌍'}</span>
+    </div>
+  `).join('');
+  searchResults.classList.add('show');
+  return matches;
+}
+
+function navigateToEvent(ev) {
+  cancelMomentum();
+  cancelSmooth();
+  const targetX = window.innerWidth / 2 - ev.x;
+  smoothScrollTo(targetX, 800);
+  addSearchMarker(ev);
+}
+
+let searchMarkerTimer = null;
+function addSearchMarker(ev) {
+  document.querySelectorAll('.search-marker').forEach(m => m.remove());
+  if (searchMarkerTimer) { clearTimeout(searchMarkerTimer); searchMarkerTimer = null; }
+
+  const track = document.getElementById('timelineTrack');
+  const marker = document.createElement('div');
+  marker.className = 'search-marker';
+  marker.style.left = ev.x + 'px';
+  marker.innerHTML = `
+    <div class="marker-pulse"></div>
+    <div class="marker-label">📍 在这里！</div>
+  `;
+  track.appendChild(marker);
+
+  searchMarkerTimer = setTimeout(() => {
+    marker.classList.add('fading');
+    setTimeout(() => marker.remove(), 500);
+    searchMarkerTimer = null;
+  }, 10000);
+}
+
+searchInput.addEventListener('input', performSearch);
+searchInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    const matches = performSearch();
+    if (matches.length > 0) {
+      navigateToEvent(matches[0]);
+      searchResults.classList.remove('show');
+      searchInput.blur();
+    }
+  }
+  if (e.key === 'Escape') {
+    searchResults.classList.remove('show');
+    searchInput.blur();
+  }
+});
+searchBtn.addEventListener('click', () => {
+  const matches = performSearch();
+  if (matches.length > 0) {
+    navigateToEvent(matches[0]);
+    searchResults.classList.remove('show');
+    searchInput.blur();
+  }
+});
+searchResults.addEventListener('click', (e) => {
+  const item = e.target.closest('.search-result-item');
+  if (!item) return;
+  const index = parseInt(item.dataset.index);
+  const matches = performSearch();
+  if (matches[index]) {
+    navigateToEvent(matches[index]);
+    searchResults.classList.remove('show');
+    searchInput.blur();
+  }
+});
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.search-bar')) searchResults.classList.remove('show');
 });
 
 // ════════════════════════════════════════════════

@@ -188,6 +188,151 @@ body::after {
 }
 .toggle-btn.active .toggle-text { color: var(--gold); }
 
+/* ── 搜索栏 ── */
+.search-bar {
+  position: fixed;
+  top: 22px;
+  left: 22px;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+}
+.search-bar input {
+  padding: 10px 16px;
+  border: 2.5px solid var(--line);
+  border-right: none;
+  border-radius: 24px 0 0 24px;
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 14px;
+  width: 200px;
+  outline: none;
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.search-bar input:focus {
+  border-color: var(--gold);
+  box-shadow: 0 4px 14px rgba(245,184,64,0.2);
+}
+.search-bar input::placeholder { color: var(--ink-mute); }
+.search-bar button {
+  padding: 10px 14px;
+  border: 2.5px solid var(--line);
+  border-radius: 0 24px 24px 0;
+  background: var(--paper);
+  cursor: pointer;
+  font-size: 16px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+  transition: background 0.2s;
+}
+.search-bar button:hover { background: var(--gold-soft); }
+.search-results {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  width: 260px;
+  background: var(--paper);
+  border: 2px solid var(--line);
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  max-height: 300px;
+  overflow-y: auto;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-8px);
+  transition: opacity 0.2s, transform 0.2s, visibility 0.2s;
+}
+.search-results.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+.search-result-item {
+  padding: 10px 14px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--line-soft);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.15s;
+}
+.search-result-item:hover { background: var(--bg-deep); }
+.search-result-item:last-child {
+  border-bottom: none;
+  border-radius: 0 0 14px 14px;
+}
+.search-result-item .result-year {
+  font-family: 'Baloo 2', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-mute);
+  flex-shrink: 0;
+  min-width: 42px;
+}
+.search-result-item .result-title {
+  font-family: 'ZCOOL KuaiLe', 'Noto Sans SC', sans-serif;
+  font-size: 14px;
+  color: var(--ink);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.search-result-item .result-type { font-size: 14px; flex-shrink: 0; }
+.search-no-result {
+  padding: 16px;
+  text-align: center;
+  font-family: 'ZCOOL KuaiLe', sans-serif;
+  font-size: 15px;
+  color: var(--ink-mute);
+}
+
+/* ── 搜索标记 ── */
+.search-marker {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 999;
+  pointer-events: none;
+}
+.search-marker .marker-pulse {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  border: 4px solid var(--gold);
+  transform: translate(-50%, -50%);
+  animation: markerPulse 1s ease-out infinite;
+}
+@keyframes markerPulse {
+  0% { transform: translate(-50%, -50%) scale(0.6); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(2.8); opacity: 0; }
+}
+.search-marker .marker-label {
+  position: absolute;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--gold);
+  color: white;
+  padding: 5px 16px;
+  border-radius: 16px;
+  font-family: 'ZCOOL KuaiLe', sans-serif;
+  font-size: 16px;
+  white-space: nowrap;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+  border: 2.5px solid white;
+  animation: markerLabelBounce 0.5s ease-in-out infinite alternate;
+}
+@keyframes markerLabelBounce {
+  to { transform: translateX(-50%) translateY(-6px); }
+}
+.search-marker.fading {
+  transition: opacity 0.5s;
+  opacity: 0;
+}
+
 /* ── 底部提示 ── */
 .footer-hint {
   position: fixed;
@@ -567,6 +712,10 @@ body::after {
   .toggle-icon { width: 32px; height: 18px; }
   .toggle-icon::after { width: 12px; height: 12px; }
   .toggle-btn.active .toggle-icon::after { left: 16px; }
+  .search-bar { top: 14px; left: 14px; }
+  .search-bar input { width: 130px; font-size: 13px; padding: 8px 12px; }
+  .search-bar button { padding: 8px 10px; font-size: 14px; }
+  .search-results { width: 190px; }
   .dynasty-band .dynasty-name { font-size: 18px; padding: 3px 12px; }
   .dynasty-band .dynasty-emoji { font-size: 20px; }
   .year-tick .tick-label { font-size: 12px; padding: 3px 8px; }
