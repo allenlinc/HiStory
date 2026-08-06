@@ -77,7 +77,7 @@ function queryEvents(type) {
 
 function queryDynasties() {
   const results = [];
-  const stmt = db.prepare(`SELECT name, start_year AS start, end_year AS end, color FROM dynasties ORDER BY start_year`);
+  const stmt = db.prepare(`SELECT name, start_year AS start, end_year AS end, color, detail FROM dynasties ORDER BY start_year`);
   while (stmt.step()) { results.push(stmt.getAsObject()); }
   stmt.free();
   return results;
@@ -118,20 +118,23 @@ function formatYear(y) {
 const DYNASTY_EMOJI = {
   '史前': '🦴', '夏': '🏺', '商': '🐢', '周': '📜',
   '秦': '⚔️', '汉': '🐉', '三国': '🗡️', '晋': '🍵',
-  '南北朝': '🏯', '隋': '🌉', '唐': '🎐', '五代十国': '🔥',
+  '南北朝': '🏯', '隋': '🌉', '唐': '🎐', '五代': '🔥',
   '宋': '🎨', '元': '🐎', '明': '🏮', '清': '👑',
-  '近代': '🚢', '现代': '🚀',
+  '民国': '🌅', '新中国': '🚀',
 };
 
+let dynastyData = [];
+
 function buildAxis(dynasties) {
+  dynastyData = dynasties;
   let html = '<div class="timeline-axis">';
-  dynasties.forEach(d => {
+  dynasties.forEach((d, i) => {
     const x1 = yearToX(d.start);
     const x2 = yearToX(d.end);
     const w = x2 - x1;
     const showName = w > 80;
     const emoji = DYNASTY_EMOJI[d.name] || '🏛️';
-    html += `<div class="dynasty-band" style="left:${x1}px;width:${w}px;background:${d.color};opacity:0.6;">
+    html += `<div class="dynasty-band" data-dynasty-idx="${i}" style="left:${x1}px;width:${w}px;background:${d.color};opacity:0.6;">
       ${showName ? `<span class="dynasty-name"><span class="dynasty-emoji">${emoji}</span>${d.name}</span>` : ''}
     </div>`;
   });
@@ -562,6 +565,53 @@ searchResults.addEventListener('click', (e) => {
 });
 document.addEventListener('click', (e) => {
   if (!e.target.closest('.search-bar')) searchResults.classList.remove('show');
+});
+
+// ════════════════════════════════════════════════
+//  朝代详情弹窗
+// ════════════════════════════════════════════════
+const dynastyModal = document.getElementById('dynastyModal');
+const dynastyModalClose = document.getElementById('dynastyModalClose');
+const dynastyModalEmoji = document.getElementById('dynastyModalEmoji');
+const dynastyModalName = document.getElementById('dynastyModalName');
+const dynastyModalYears = document.getElementById('dynastyModalYears');
+const dynastyModalBody = document.getElementById('dynastyModalBody');
+const dynastyModalHeader = document.getElementById('dynastyModalHeader');
+
+function formatDynastyYear(y) {
+  if (y < 0) return '前' + Math.abs(y) + '年';
+  return y + '年';
+}
+
+function openDynastyModal(idx) {
+  const d = dynastyData[idx];
+  if (!d) return;
+  const emoji = DYNASTY_EMOJI[d.name] || '🏛️';
+  dynastyModalEmoji.textContent = emoji;
+  dynastyModalName.textContent = d.name;
+  dynastyModalYears.textContent = `${formatDynastyYear(d.start)} — ${formatDynastyYear(d.end)}`;
+  dynastyModalBody.textContent = d.detail || '暂无详细介绍';
+  dynastyModalHeader.style.background = `linear-gradient(135deg, ${d.color}33, ${d.color}11)`;
+  dynastyModal.classList.add('show');
+}
+
+function closeDynastyModal() {
+  dynastyModal.classList.remove('show');
+}
+
+trackEl.addEventListener('click', (e) => {
+  const band = e.target.closest('.dynasty-band');
+  if (band) {
+    e.stopPropagation();
+    const idx = parseInt(band.dataset.dynastyIdx);
+    openDynastyModal(idx);
+  }
+});
+
+dynastyModalClose.addEventListener('click', closeDynastyModal);
+dynastyModal.querySelector('.dynasty-modal-backdrop').addEventListener('click', closeDynastyModal);
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && dynastyModal.classList.contains('show')) closeDynastyModal();
 });
 
 // ════════════════════════════════════════════════
