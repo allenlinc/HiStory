@@ -565,6 +565,8 @@ body::after {
 .dynasty-band .dynasty-emoji {
   font-size: 28px;
   filter: drop-shadow(0 2px 3px rgba(0,0,0,0.2));
+}
+.dynasty-band:hover .dynasty-emoji {
   animation: dynastyWobble 4s ease-in-out infinite;
 }
 @keyframes dynastyWobble {
@@ -617,6 +619,8 @@ body::after {
   display: flex;
   flex-direction: column;
   align-items: center;
+  content-visibility: auto;
+  contain-intrinsic-size: 200px 350px;
 }
 .event-node.china { transform: translate(-50%, -100%); }
 .event-node.world { transform: translate(-50%, 0%); }
@@ -893,6 +897,8 @@ body::after {
   position: relative;
   z-index: 1;
   filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+}
+.event-node:hover .card-emoji span {
   animation: emojiWobble 3s ease-in-out infinite;
 }
 @keyframes emojiWobble {

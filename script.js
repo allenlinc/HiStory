@@ -149,13 +149,13 @@ function buildAxis(dynasties) {
   return html;
 }
 
-function buildNode(ev, type, index) {
+function buildNode(ev, type) {
   const mediaHtml = ev.image
     ? `<div class="card-img-wrap"><img class="card-img" src="${ev.image}" alt="${ev.title}" loading="lazy"></div>`
     : (ev.emoji ? `<div class="card-emoji"><span>${ev.emoji}</span></div>` : '');
   const tagText = type === 'china' ? '中国' : '世界';
   return `
-    <div class="event-node ${type}" style="left: ${ev.x}px; animation-delay: ${index * 0.04}s;">
+    <div class="event-node ${type}" style="left: ${ev.x}px;">
       <div class="card">
         <div class="card-tag">${tagText}</div>
         ${mediaHtml}
@@ -187,17 +187,57 @@ function renderTimeline() {
     ...worldEvents.map(e => ({ ...e, type: 'world' }))
   ];
 
-  let html = '';
-  html += buildAxis(dynasties);
-  chinaEvents.forEach((ev, i) => { html += buildNode(ev, 'china', i); });
-  worldEvents.forEach((ev, i) => { html += buildNode(ev, 'world', i); });
-
   const track = document.getElementById('timelineTrack');
-  track.innerHTML = html;
+  track.innerHTML = buildAxis(dynasties);
   track.style.width = TOTAL_WIDTH + 'px';
 
+  renderedNodes.clear();
   currentX = -400;
   applyTransform();
+  updateVisibleNodes();
+}
+
+// ════════════════════════════════════════════════
+//  虚拟滚动：只渲染可视区域 ±2 屏内的事件卡片
+// ════════════════════════════════════════════════
+const renderedNodes = new Map();
+let virtualUpdatePending = false;
+
+function updateVisibleNodes() {
+  virtualUpdatePending = false;
+  const track = document.getElementById('timelineTrack');
+  if (!track || allEvents.length === 0) return;
+
+  const margin = window.innerWidth * 2;
+  const leftBound = -currentX - margin;
+  const rightBound = -currentX + window.innerWidth + margin;
+
+  // 移除离开视口的节点
+  for (const [idx, el] of renderedNodes) {
+    const ev = allEvents[idx];
+    if (!ev || ev.x < leftBound || ev.x > rightBound) {
+      el.remove();
+      renderedNodes.delete(idx);
+    }
+  }
+
+  // 添加进入视口的节点
+  allEvents.forEach((ev, idx) => {
+    if (ev.x >= leftBound && ev.x <= rightBound && !renderedNodes.has(idx)) {
+      const temp = document.createElement('div');
+      temp.innerHTML = buildNode(ev, ev.type);
+      const el = temp.firstElementChild;
+      track.appendChild(el);
+      renderedNodes.set(idx, el);
+    }
+  });
+}
+
+function scheduleVirtualUpdate() {
+  if (!virtualUpdatePending) {
+    virtualUpdatePending = true;
+    requestAnimationFrame(updateVisibleNodes);
+  }
 }
 
 // ════════════════════════════════════════════════
@@ -226,7 +266,10 @@ function clampX() {
 
 function applyTransform() {
   const track = document.getElementById('timelineTrack');
-  if (track) track.style.transform = `translate3d(${currentX}px, 0, 0)`;
+  if (track) {
+    track.style.transform = `translate3d(${currentX}px, 0, 0)`;
+    scheduleVirtualUpdate();
+  }
 }
 
 // ── 平滑滚动引擎 ──
@@ -626,10 +669,11 @@ const STAR_COLORS = [
   'rgba(74, 144, 217, ',  // 世界蓝
   'rgba(255, 255, 255, ', // 白色
 ];
-const NUM_STARS = 600;
+const NUM_STARS = 150;
 let starList = [];
 let starCenterX, starCenterY;
 let starFocalLength;
+let starfieldPaused = false;
 
 function initStarfield() {
   starCanvas.width = window.innerWidth;
@@ -650,6 +694,7 @@ function initStarfield() {
 }
 
 function drawStarfield() {
+  if (starfieldPaused) return;
   starCtx.clearRect(0, 0, starCanvas.width, starCanvas.height);
   for (let i = 0; i < NUM_STARS; i++) {
     const s = starList[i];
@@ -670,6 +715,15 @@ function drawStarfield() {
   }
   requestAnimationFrame(drawStarfield);
 }
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    starfieldPaused = true;
+  } else if (starfieldPaused) {
+    starfieldPaused = false;
+    requestAnimationFrame(drawStarfield);
+  }
+});
 
 window.addEventListener('resize', initStarfield);
 initStarfield();
