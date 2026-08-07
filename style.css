@@ -33,15 +33,6 @@ html, body {
   user-select: none;
 }
 
-/* ── 星空背景 ── */
-#starfield {
-  position: fixed;
-  top: 0; left: 0;
-  width: 100vw; height: 100vh;
-  z-index: 0;
-  pointer-events: none;
-}
-
 /* ── 圆点纹理背景 ── */
 body::before {
   content: '';
