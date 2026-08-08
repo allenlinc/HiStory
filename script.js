@@ -107,7 +107,7 @@ function yearToX(yearNum) {
 
 const yearTicks = [];
 for (let y = -4000; y <= 1300; y += 250) { yearTicks.push(y); }
-for (let y = 1400; y <= 2000; y += 50) { yearTicks.push(y); }
+for (let y = 1400; y <= 2050; y += 50) { yearTicks.push(y); }
 
 function formatYear(y) {
   if (y < 0) return '前' + Math.abs(y);
@@ -170,17 +170,38 @@ function buildNode(ev, type, idx) {
     </div>`;
 }
 
+// 防碰撞：同类型事件间距不小于 minGap，避免卡片重叠
+function spreadCollisions(events, minGap) {
+  if (events.length < 2) return;
+  events.sort((a, b) => a.x - b.x);
+  // 正向扫描：确保最小间距
+  for (let i = 1; i < events.length; i++) {
+    if (events[i].x - events[i - 1].x < minGap) {
+      events[i].x = events[i - 1].x + minGap;
+    }
+  }
+  // 反向扫描：防止整体右偏
+  for (let i = events.length - 2; i >= 0; i--) {
+    if (events[i + 1].x - events[i].x < minGap) {
+      events[i].x = events[i + 1].x - minGap;
+    }
+  }
+}
+
 function renderTimeline() {
   const chinaEvents = queryEvents('china');
   const worldEvents = queryEvents('world');
   const dynasties = queryDynasties();
 
-  const allYears = [...chinaEvents, ...worldEvents].map(e => e.yearNum);
-  minYear = Math.min(...allYears);
-  maxYear = Math.max(...allYears);
+  // 保持 minYear/maxYear 固定（-4000 ~ 2026），与年份刻度生成范围一致
+  // 避免数据范围变化导致刻度和朝代带位置错乱
 
   chinaEvents.forEach(e => { e.x = yearToX(e.yearNum); });
   worldEvents.forEach(e => { e.x = yearToX(e.yearNum); });
+
+  // 防碰撞：中国事件朝上、世界事件朝下，分别处理同类型重叠
+  spreadCollisions(chinaEvents, 210);
+  spreadCollisions(worldEvents, 210);
 
   allEvents = [
     ...chinaEvents.map(e => ({ ...e, type: 'china' })),
