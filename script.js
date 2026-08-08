@@ -149,21 +149,21 @@ function buildAxis(dynasties) {
   return html;
 }
 
-function buildNode(ev, type) {
+function buildNode(ev, type, idx) {
   const mediaHtml = ev.image
     ? `<div class="card-img-wrap"><img class="card-img" src="${ev.image}" alt="${ev.title}" loading="lazy"></div>`
     : (ev.emoji ? `<div class="card-emoji"><span>${ev.emoji}</span></div>` : '');
   const tagText = type === 'china' ? '中国' : '世界';
   return `
-    <div class="event-node ${type}" style="left: ${ev.x}px;">
+    <div class="event-node ${type}" data-event-idx="${idx}" style="left: ${ev.x}px;">
       <div class="card">
         <div class="card-tag">${tagText}</div>
         ${mediaHtml}
         <div class="card-body">
           <div class="year">${ev.year}</div>
           <div class="title">${ev.title}</div>
-          <div class="desc">${ev.desc}</div>
         </div>
+        <div class="card-hint">📖 点击查看详情</div>
       </div>
       <div class="stem"></div>
       <div class="dot"></div>
@@ -225,7 +225,7 @@ function updateVisibleNodes() {
   allEvents.forEach((ev, idx) => {
     if (ev.x >= leftBound && ev.x <= rightBound && !renderedNodes.has(idx)) {
       const temp = document.createElement('div');
-      temp.innerHTML = buildNode(ev, ev.type);
+      temp.innerHTML = buildNode(ev, ev.type, idx);
       const el = temp.firstElementChild;
       track.appendChild(el);
       renderedNodes.set(idx, el);
@@ -374,10 +374,9 @@ const CLICK_THRESHOLD = 6;
 // 拖拽速度追踪
 let dragHistory = [];
 
-function toggleNodeActive(node) {
-  const wasActive = node.classList.contains('active');
-  document.querySelectorAll('.event-node.active').forEach(n => n.classList.remove('active'));
-  if (!wasActive) node.classList.add('active');
+function openEventModalByNode(node) {
+  const idx = parseInt(node.dataset.eventIdx);
+  if (!isNaN(idx) && allEvents[idx]) openEventModal(idx);
 }
 
 trackEl.addEventListener('mousedown', (e) => {
@@ -406,7 +405,7 @@ window.addEventListener('mouseup', (e) => {
   trackEl.style.cursor = 'grab';
   if (mouseDownTarget) {
     const moved = Math.abs(e.pageX - mouseDownX) + Math.abs(e.pageY - mouseDownY);
-    if (moved < CLICK_THRESHOLD) toggleNodeActive(mouseDownTarget);
+    if (moved < CLICK_THRESHOLD) openEventModalByNode(mouseDownTarget);
   }
   // 计算释放时的速度，触发惯性滑动
   if (dragHistory.length >= 2) {
@@ -423,8 +422,8 @@ window.addEventListener('mouseup', (e) => {
 });
 
 document.addEventListener('mousedown', (e) => {
-  if (!e.target.closest('.event-node') && !e.target.closest('.toggle-btn')) {
-    document.querySelectorAll('.event-node.active').forEach(n => n.classList.remove('active'));
+  if (!e.target.closest('.event-node') && !e.target.closest('.toggle-btn') && !e.target.closest('.search-bar')) {
+    // 点击空白区域不做额外操作
   }
 });
 
@@ -453,7 +452,7 @@ trackEl.addEventListener('touchend', (e) => {
   if (touchDownTarget) {
     const t = e.changedTouches[0];
     const moved = Math.abs(t.pageX - touchDownX) + Math.abs(t.pageY - touchDownY);
-    if (moved < CLICK_THRESHOLD) toggleNodeActive(touchDownTarget);
+    if (moved < CLICK_THRESHOLD) openEventModalByNode(touchDownTarget);
   }
   // 触摸惯性
   if (touchHistory.length >= 2) {
@@ -654,8 +653,60 @@ trackEl.addEventListener('click', (e) => {
 dynastyModalClose.addEventListener('click', closeDynastyModal);
 dynastyModal.querySelector('.dynasty-modal-backdrop').addEventListener('click', closeDynastyModal);
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && dynastyModal.classList.contains('show')) closeDynastyModal();
+  if (e.key === 'Escape') {
+    if (dynastyModal.classList.contains('show')) closeDynastyModal();
+    if (eventModal.classList.contains('show')) closeEventModal();
+  }
 });
+
+// ════════════════════════════════════════════════
+//  事件详情弹窗
+// ════════════════════════════════════════════════
+const eventModal = document.getElementById('eventModal');
+const eventModalClose = document.getElementById('eventModalClose');
+const eventModalHero = document.getElementById('eventModalHero');
+const eventModalImg = document.getElementById('eventModalImg');
+const eventModalEmoji = document.getElementById('eventModalEmoji');
+const eventModalTag = document.getElementById('eventModalTag');
+const eventModalYear = document.getElementById('eventModalYear');
+const eventModalTitle = document.getElementById('eventModalTitle');
+const eventModalDesc = document.getElementById('eventModalDesc');
+
+function openEventModal(idx) {
+  const ev = allEvents[idx];
+  if (!ev) return;
+  const isChina = ev.type === 'china';
+  const tagText = isChina ? '中国' : '世界';
+
+  // 重置 hero 区域
+  eventModalHero.className = 'event-modal-hero ' + ev.type;
+  eventModalImg.style.display = 'none';
+  eventModalEmoji.style.display = 'none';
+
+  if (ev.image) {
+    eventModalImg.src = ev.image;
+    eventModalImg.alt = ev.title;
+    eventModalImg.style.display = 'block';
+  } else if (ev.emoji) {
+    eventModalEmoji.textContent = ev.emoji;
+    eventModalEmoji.style.display = 'flex';
+  }
+
+  eventModalTag.className = 'event-modal-tag ' + ev.type;
+  eventModalTag.textContent = tagText;
+  eventModalYear.textContent = ev.year;
+  eventModalTitle.textContent = ev.title;
+  eventModalDesc.textContent = ev.desc || '暂无详细介绍';
+
+  eventModal.classList.add('show');
+}
+
+function closeEventModal() {
+  eventModal.classList.remove('show');
+}
+
+eventModalClose.addEventListener('click', closeEventModal);
+eventModal.querySelector('.event-modal-backdrop').addEventListener('click', closeEventModal);
 
 // ════════════════════════════════════════════════
 //  启动
