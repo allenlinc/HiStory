@@ -395,9 +395,11 @@ const CLICK_THRESHOLD = 6;
 // 拖拽速度追踪
 let dragHistory = [];
 
-function openEventModalByNode(node) {
+function openEventDetailByNode(node) {
   const idx = parseInt(node.dataset.eventIdx);
-  if (!isNaN(idx) && allEvents[idx]) openEventModal(idx);
+  if (!isNaN(idx) && allEvents[idx]) {
+    window.location.href = `detail.html?type=event&idx=${idx}`;
+  }
 }
 
 trackEl.addEventListener('mousedown', (e) => {
@@ -426,7 +428,7 @@ window.addEventListener('mouseup', (e) => {
   trackEl.style.cursor = 'grab';
   if (mouseDownTarget) {
     const moved = Math.abs(e.pageX - mouseDownX) + Math.abs(e.pageY - mouseDownY);
-    if (moved < CLICK_THRESHOLD) openEventModalByNode(mouseDownTarget);
+    if (moved < CLICK_THRESHOLD) openEventDetailByNode(mouseDownTarget);
   }
   // 计算释放时的速度，触发惯性滑动
   if (dragHistory.length >= 2) {
@@ -473,7 +475,7 @@ trackEl.addEventListener('touchend', (e) => {
   if (touchDownTarget) {
     const t = e.changedTouches[0];
     const moved = Math.abs(t.pageX - touchDownX) + Math.abs(t.pageY - touchDownY);
-    if (moved < CLICK_THRESHOLD) openEventModalByNode(touchDownTarget);
+    if (moved < CLICK_THRESHOLD) openEventDetailByNode(touchDownTarget);
   }
   // 触摸惯性
   if (touchHistory.length >= 2) {
@@ -631,103 +633,16 @@ document.addEventListener('click', (e) => {
 });
 
 // ════════════════════════════════════════════════
-//  朝代详情弹窗
+//  朝代/事件点击 → 跳转到详情页
 // ════════════════════════════════════════════════
-const dynastyModal = document.getElementById('dynastyModal');
-const dynastyModalClose = document.getElementById('dynastyModalClose');
-const dynastyModalEmoji = document.getElementById('dynastyModalEmoji');
-const dynastyModalName = document.getElementById('dynastyModalName');
-const dynastyModalYears = document.getElementById('dynastyModalYears');
-const dynastyModalBody = document.getElementById('dynastyModalBody');
-const dynastyModalHeader = document.getElementById('dynastyModalHeader');
-
-function formatDynastyYear(y) {
-  if (y < 0) return '前' + Math.abs(y) + '年';
-  return y + '年';
-}
-
-function openDynastyModal(idx) {
-  const d = dynastyData[idx];
-  if (!d) return;
-  const emoji = DYNASTY_EMOJI[d.name] || '🏛️';
-  dynastyModalEmoji.textContent = emoji;
-  dynastyModalName.textContent = d.name;
-  dynastyModalYears.textContent = `${formatDynastyYear(d.start)} — ${formatDynastyYear(d.end)}`;
-  dynastyModalBody.textContent = d.detail || '暂无详细介绍';
-  dynastyModalHeader.style.background = `linear-gradient(135deg, ${d.color}33, ${d.color}11)`;
-  dynastyModal.classList.add('show');
-}
-
-function closeDynastyModal() {
-  dynastyModal.classList.remove('show');
-}
-
 trackEl.addEventListener('click', (e) => {
   const band = e.target.closest('.dynasty-band');
   if (band) {
     e.stopPropagation();
     const idx = parseInt(band.dataset.dynastyIdx);
-    openDynastyModal(idx);
+    window.location.href = `detail.html?type=dynasty&idx=${idx}`;
   }
 });
-
-dynastyModalClose.addEventListener('click', closeDynastyModal);
-dynastyModal.querySelector('.dynasty-modal-backdrop').addEventListener('click', closeDynastyModal);
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') {
-    if (dynastyModal.classList.contains('show')) closeDynastyModal();
-    if (eventModal.classList.contains('show')) closeEventModal();
-  }
-});
-
-// ════════════════════════════════════════════════
-//  事件详情弹窗
-// ════════════════════════════════════════════════
-const eventModal = document.getElementById('eventModal');
-const eventModalClose = document.getElementById('eventModalClose');
-const eventModalHero = document.getElementById('eventModalHero');
-const eventModalImg = document.getElementById('eventModalImg');
-const eventModalEmoji = document.getElementById('eventModalEmoji');
-const eventModalTag = document.getElementById('eventModalTag');
-const eventModalYear = document.getElementById('eventModalYear');
-const eventModalTitle = document.getElementById('eventModalTitle');
-const eventModalDesc = document.getElementById('eventModalDesc');
-
-function openEventModal(idx) {
-  const ev = allEvents[idx];
-  if (!ev) return;
-  const isChina = ev.type === 'china';
-  const tagText = isChina ? '中国' : '世界';
-
-  // 重置 hero 区域
-  eventModalHero.className = 'event-modal-hero ' + ev.type;
-  eventModalImg.style.display = 'none';
-  eventModalEmoji.style.display = 'none';
-
-  if (ev.image) {
-    eventModalImg.src = ev.image;
-    eventModalImg.alt = ev.title;
-    eventModalImg.style.display = 'block';
-  } else if (ev.emoji) {
-    eventModalEmoji.textContent = ev.emoji;
-    eventModalEmoji.style.display = 'flex';
-  }
-
-  eventModalTag.className = 'event-modal-tag ' + ev.type;
-  eventModalTag.textContent = tagText;
-  eventModalYear.textContent = ev.year;
-  eventModalTitle.textContent = ev.title;
-  eventModalDesc.textContent = ev.desc || '暂无详细介绍';
-
-  eventModal.classList.add('show');
-}
-
-function closeEventModal() {
-  eventModal.classList.remove('show');
-}
-
-eventModalClose.addEventListener('click', closeEventModal);
-eventModal.querySelector('.event-modal-backdrop').addEventListener('click', closeEventModal);
 
 // ════════════════════════════════════════════════
 //  启动

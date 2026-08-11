@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>历史详情 · 中外对照</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Baloo+2:wght@500;700;800&family=Noto+Sans+SC:wght@300;400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="detail.css">
+</head>
+<body>
+
+<div class="detail-page" id="detailPage">
+  <nav class="detail-nav">
+    <a href="index.html" class="back-btn">
+      <span class="back-arrow">←</span>
+      <span>返回时间轴</span>
+    </a>
+    <div class="nav-brand">📖 历史详情</div>
+  </nav>
+
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-emoji">📜</div>
+    <div class="loading-text">正在加载详情…</div>
+  </div>
+
+  <main class="detail-content" id="detailContent" style="display:none;">
+    <!-- 由 detail.js 动态填充 -->
+  </main>
+</div>
+
+<script src="detail.js"></script>
+</body>
+</html>

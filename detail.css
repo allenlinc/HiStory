@@ -1,0 +1,414 @@
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #FFF8F0;
+  --bg-deep: #FFF0E0;
+  --paper: #FFFFFF;
+  --ink: #3D3327;
+  --ink-soft: #7A6B58;
+  --ink-mute: #B0A090;
+  --line: #E8D8C0;
+  --line-soft: #F0E5D5;
+  --china: #E85D5D;
+  --china-deep: #C04040;
+  --china-light: #FF8888;
+  --world: #4A90D9;
+  --world-deep: #2B6BA8;
+  --world-light: #7AB8F0;
+  --gold: #F5B840;
+  --gold-soft: #FFD070;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Noto Sans SC', sans-serif;
+  min-height: 100vh;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(circle at 15% 20%, rgba(245,184,64,0.06), transparent 40%),
+    radial-gradient(circle at 85% 80%, rgba(232,93,93,0.04), transparent 40%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── 顶部导航 ── */
+.detail-nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 28px;
+  background: rgba(255,248,240,0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 2px solid var(--line-soft);
+}
+.back-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: var(--paper);
+  border: 2.5px solid var(--line);
+  border-radius: 24px;
+  color: var(--ink);
+  font-family: 'ZCOOL KuaiLe', sans-serif;
+  font-size: 15px;
+  text-decoration: none;
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.05);
+  cursor: pointer;
+}
+.back-btn:hover {
+  border-color: var(--gold);
+  box-shadow: 0 6px 20px rgba(245,184,64,0.2);
+  transform: translateY(-2px);
+}
+.back-arrow { font-size: 18px; transition: transform 0.2s; }
+.back-btn:hover .back-arrow { transform: translateX(-4px); }
+.nav-brand {
+  font-family: 'ZCOOL KuaiLe', sans-serif;
+  font-size: 18px;
+  color: var(--ink-mute);
+  letter-spacing: 0.1em;
+}
+
+/* ── 主内容区 ── */
+.detail-content {
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 32px 24px 80px;
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Hero 区 ── */
+.detail-hero {
+  border-radius: 28px;
+  overflow: hidden;
+  margin-bottom: 32px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.1);
+  background: var(--paper);
+}
+.detail-hero-bg {
+  height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 100px;
+  position: relative;
+  overflow: hidden;
+}
+.detail-hero-bg.china {
+  background: linear-gradient(135deg, #FFF0E8 0%, #FFDDD0 60%, #FFCCCC 100%);
+}
+.detail-hero-bg.world {
+  background: linear-gradient(135deg, #E8F0FF 0%, #D0E0FF 60%, #B8D0FF 100%);
+}
+.detail-hero-bg.dynasty {
+  background: linear-gradient(135deg, #FFF8E8 0%, #FFEED0 60%, #FFE0B0 100%);
+}
+.detail-hero-bg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+}
+.detail-hero-bg::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 60px;
+  background: linear-gradient(to bottom, transparent, var(--paper));
+}
+.detail-hero-emoji {
+  filter: drop-shadow(0 6px 16px rgba(0,0,0,0.15));
+  animation: heroFloat 3s ease-in-out infinite;
+  position: relative;
+  z-index: 1;
+}
+@keyframes heroFloat {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-12px) scale(1.05); }
+}
+
+.detail-hero-body {
+  padding: 24px 32px 32px;
+}
+.detail-badges {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.detail-badge {
+  font-family: 'ZCOOL KuaiLe', sans-serif;
+  font-size: 14px;
+  padding: 6px 18px;
+  border-radius: 16px;
+  letter-spacing: 0.05em;
+}
+.detail-badge.type-china {
+  color: var(--china);
+  background: rgba(232,93,93,0.1);
+  border: 2px solid var(--china-light);
+}
+.detail-badge.type-world {
+  color: var(--world);
+  background: rgba(74,144,217,0.1);
+  border: 2px solid var(--world-light);
+}
+.detail-badge.type-dynasty {
+  color: var(--gold);
+  background: rgba(245,184,64,0.12);
+  border: 2px solid var(--gold-soft);
+}
+.detail-badge.year-badge {
+  font-family: 'Baloo 2', sans-serif;
+  font-weight: 800;
+  color: var(--ink-soft);
+  background: var(--bg-deep);
+  border: 2px solid var(--line);
+}
+.detail-title {
+  font-family: 'ZCOOL KuaiLe', 'Noto Sans SC', sans-serif;
+  font-size: 42px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.2;
+  margin-bottom: 8px;
+}
+.detail-subtitle {
+  font-family: 'Baloo 2', sans-serif;
+  font-size: 16px;
+  color: var(--ink-mute);
+  letter-spacing: 0.1em;
+}
+
+/* ── 正文 ── */
+.detail-section {
+  background: var(--paper);
+  border-radius: 24px;
+  padding: 32px;
+  margin-bottom: 24px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+  border: 2px solid var(--line-soft);
+}
+.section-title {
+  font-family: 'ZCOOL KuaiLe', sans-serif;
+  font-size: 22px;
+  color: var(--ink);
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.section-title .section-icon {
+  font-size: 26px;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+}
+.section-title::after {
+  content: '';
+  flex: 1;
+  height: 3px;
+  background: linear-gradient(to right, var(--gold-soft), transparent);
+  border-radius: 2px;
+  margin-left: 4px;
+}
+.detail-text {
+  font-size: 17px;
+  line-height: 2;
+  color: var(--ink-soft);
+  text-align: justify;
+}
+.detail-text p { margin-bottom: 14px; }
+.detail-text p:last-child { margin-bottom: 0; }
+
+/* ── 关联信息卡片 ── */
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 8px;
+}
+.info-card {
+  background: var(--bg);
+  border-radius: 16px;
+  padding: 18px 20px;
+  border: 2px solid var(--line-soft);
+}
+.info-card-label {
+  font-size: 13px;
+  color: var(--ink-mute);
+  margin-bottom: 6px;
+  font-family: 'Baloo 2', sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+.info-card-value {
+  font-family: 'ZCOOL KuaiLe', sans-serif;
+  font-size: 18px;
+  color: var(--ink);
+}
+
+/* ── 同期事件列表 ── */
+.related-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.related-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  background: var(--bg);
+  border-radius: 14px;
+  border: 2px solid var(--line-soft);
+  text-decoration: none;
+  color: var(--ink);
+  transition: all 0.2s;
+}
+.related-item:hover {
+  border-color: var(--gold);
+  transform: translateX(6px);
+  box-shadow: 0 4px 12px rgba(245,184,64,0.1);
+}
+.related-item-dot {
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.related-item-dot.china { background: var(--china); box-shadow: 0 0 0 2px var(--china-deep); }
+.related-item-dot.world { background: var(--world); box-shadow: 0 0 0 2px var(--world-deep); }
+.related-item-year {
+  font-family: 'Baloo 2', sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--ink-mute);
+  min-width: 70px;
+  flex-shrink: 0;
+}
+.related-item-title {
+  font-family: 'ZCOOL KuaiLe', sans-serif;
+  font-size: 16px;
+  color: var(--ink);
+  flex: 1;
+}
+.related-item-arrow {
+  color: var(--ink-mute);
+  font-size: 16px;
+  transition: transform 0.2s;
+}
+.related-item:hover .related-item-arrow {
+  transform: translateX(4px);
+  color: var(--gold);
+}
+.related-item.current {
+  border-color: var(--gold);
+  background: rgba(245,184,64,0.06);
+}
+
+/* ── 朝代色带预览 ── */
+.dynasty-preview {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  border-radius: 16px;
+  border: 2px solid var(--line-soft);
+  text-decoration: none;
+  color: var(--ink);
+  transition: all 0.2s;
+}
+.dynasty-preview:hover {
+  border-color: var(--gold);
+  transform: translateX(6px);
+}
+.dynasty-preview-color {
+  width: 8px;
+  height: 48px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+.dynasty-preview-info {
+  flex: 1;
+}
+.dynasty-preview-name {
+  font-family: 'ZCOOL KuaiLe', sans-serif;
+  font-size: 20px;
+  color: var(--ink);
+  margin-bottom: 2px;
+}
+.dynasty-preview-years {
+  font-family: 'Baloo 2', sans-serif;
+  font-size: 13px;
+  color: var(--ink-mute);
+  font-weight: 700;
+}
+
+/* ── 加载遮罩 ── */
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  gap: 20px;
+  transition: opacity 0.4s ease;
+}
+.loading-overlay.hidden { opacity: 0; pointer-events: none; }
+.loading-emoji {
+  font-size: 56px;
+  animation: loadingBounce 0.6s ease-in-out infinite alternate;
+}
+@keyframes loadingBounce { to { transform: translateY(-15px) scale(1.1); } }
+.loading-text {
+  font-family: 'ZCOOL KuaiLe', sans-serif;
+  font-size: 18px;
+  color: var(--ink-soft);
+  letter-spacing: 0.15em;
+  animation: pulseFade 1.5s ease-in-out infinite;
+}
+@keyframes pulseFade { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+/* ── 错误状态 ── */
+.error-state {
+  text-align: center;
+  padding: 80px 24px;
+}
+.error-emoji { font-size: 64px; margin-bottom: 16px; }
+.error-text {
+  font-family: 'ZCOOL KuaiLe', sans-serif;
+  font-size: 20px;
+  color: var(--ink-mute);
+  margin-bottom: 24px;
+}
+
+/* ── 响应式 ── */
+@media (max-width: 768px) {
+  .detail-nav { padding: 12px 16px; }
+  .nav-brand { display: none; }
+  .detail-content { padding: 20px 14px 60px; }
+  .detail-hero-bg { height: 160px; font-size: 72px; }
+  .detail-hero-body { padding: 18px 20px 24px; }
+  .detail-title { font-size: 30px; }
+  .detail-section { padding: 20px; border-radius: 18px; }
+  .section-title { font-size: 19px; }
+  .detail-text { font-size: 15px; line-height: 1.85; }
+  .info-grid { grid-template-columns: 1fr; }
+  .related-item-year { min-width: 56px; font-size: 12px; }
+  .related-item-title { font-size: 14px; }
+}
