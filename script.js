@@ -398,7 +398,7 @@ let dragHistory = [];
 function openEventDetailByNode(node) {
   const idx = parseInt(node.dataset.eventIdx);
   if (!isNaN(idx) && allEvents[idx]) {
-    window.location.href = `detail.html?type=event&idx=${idx}`;
+    window.open(`detail.html?type=event&idx=${idx}`, '_blank');
   }
 }
 
@@ -640,7 +640,7 @@ trackEl.addEventListener('click', (e) => {
   if (band) {
     e.stopPropagation();
     const idx = parseInt(band.dataset.dynastyIdx);
-    window.location.href = `detail.html?type=dynasty&idx=${idx}`;
+    window.open(`detail.html?type=dynasty&idx=${idx}`, '_blank');
   }
 });
 
