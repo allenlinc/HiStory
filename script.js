@@ -125,6 +125,86 @@ const DYNASTY_EMOJI = {
 
 let dynastyData = [];
 
+// ── 时代背景图映射 ──
+const ERA_BACKGROUNDS = {
+  '史前': 'img/prehistoric-bg.jpg',
+  '夏': 'img/era-bronze.jpg',
+  '商': 'img/era-bronze.jpg',
+  '周': 'img/era-bronze.jpg',
+  '秦': 'img/era-qinhan.jpg',
+  '汉': 'img/era-qinhan.jpg',
+  '三国': 'img/era-weijin.jpg',
+  '晋': 'img/era-weijin.jpg',
+  '南北朝': 'img/era-weijin.jpg',
+  '隋': 'img/era-tang.jpg',
+  '唐': 'img/era-tang.jpg',
+  '五代': 'img/era-tang.jpg',
+  '宋': 'img/era-songyuan.jpg',
+  '元': 'img/era-songyuan.jpg',
+  '明': 'img/era-mingqing.jpg',
+  '清': 'img/era-mingqing.jpg',
+  '民国': 'img/era-modern.jpg',
+  '新中国': 'img/era-modern.jpg',
+};
+
+// 双层背景交叉淡入淡出
+let bgLayerTurn = 1; // 当前显示的图层编号 (1 或 2)
+let currentEraBg = null;
+
+function preloadEraImages() {
+  const urls = [...new Set(Object.values(ERA_BACKGROUNDS))];
+  urls.forEach(url => {
+    const img = new Image();
+    img.src = url;
+  });
+}
+
+function updateEraBackground() {
+  if (dynastyData.length === 0) return;
+
+  // 屏幕中心在 track 坐标系中的位置
+  const centerX = -currentX + window.innerWidth / 2;
+
+  // 找到包含屏幕中心的朝代
+  let activeDynasty = null;
+  for (const d of dynastyData) {
+    const x1 = yearToX(d.start);
+    const x2 = yearToX(d.end);
+    if (centerX >= x1 && centerX <= x2) {
+      activeDynasty = d.name;
+      break;
+    }
+  }
+
+  // 如果不在任何朝代内，找最近的朝代
+  if (!activeDynasty) {
+    let minDist = Infinity;
+    for (const d of dynastyData) {
+      const x1 = yearToX(d.start);
+      const x2 = yearToX(d.end);
+      const mid = (x1 + x2) / 2;
+      const dist = Math.abs(centerX - mid);
+      if (dist < minDist) {
+        minDist = dist;
+        activeDynasty = d.name;
+      }
+    }
+  }
+
+  const bgUrl = ERA_BACKGROUNDS[activeDynasty];
+  if (!bgUrl || bgUrl === currentEraBg) return;
+
+  currentEraBg = bgUrl;
+  const nextLayer = bgLayerTurn === 1 ? 2 : 1;
+  const nextEl = document.getElementById(`eraBg${nextLayer}`);
+  const currentEl = document.getElementById(`eraBg${bgLayerTurn}`);
+
+  nextEl.style.backgroundImage = `url('${bgUrl}')`;
+  nextEl.classList.add('active');
+  if (currentEl) currentEl.classList.remove('active');
+  bgLayerTurn = nextLayer;
+}
+
 function buildAxis(dynasties) {
   dynastyData = dynasties;
   let html = '<div class="timeline-axis">';
@@ -290,6 +370,7 @@ function applyTransform() {
   if (track) {
     track.style.transform = `translate3d(${currentX}px, 0, 0)`;
     scheduleVirtualUpdate();
+    updateEraBackground();
   }
 }
 
@@ -650,7 +731,9 @@ trackEl.addEventListener('click', (e) => {
 (async () => {
   try {
     await initDB();
+    preloadEraImages();
     renderTimeline();
+    updateEraBackground();
   } catch(err) {
     console.error('[DB] 初始化失败:', err);
     document.getElementById('loadingDetail').textContent = '错误: ' + err.message;

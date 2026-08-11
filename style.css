@@ -33,6 +33,22 @@ html, body {
   user-select: none;
 }
 
+/* ── 时代背景图层 ── */
+.era-bg-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0;
+  transition: opacity 1.2s ease-in-out;
+  pointer-events: none;
+}
+.era-bg-layer.active {
+  opacity: 0.2;
+}
+
 /* ── 圆点纹理背景 ── */
 body::before {
   content: '';
