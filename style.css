@@ -340,6 +340,21 @@ body::after {
   font-weight: 500;
 }
 
+/* ── 版本号 ── */
+.version-tag {
+  position: fixed;
+  bottom: 12px;
+  right: 16px;
+  z-index: 100;
+  font-family: 'Baloo 2', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-mute);
+  opacity: 0.4;
+  pointer-events: none;
+  letter-spacing: 0.05em;
+}
+
 /* ── 朝代详情弹窗 ── */
 .dynasty-modal {
   position: fixed;
