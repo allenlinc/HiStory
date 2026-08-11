@@ -128,11 +128,11 @@ let dynastyData = [];
 // ── 时代背景图映射 ──
 const ERA_BACKGROUNDS = {
   '史前': 'img/prehistoric-bg.jpg',
-  '夏': 'img/era-bronze.jpg',
+  '夏': 'img/era-xia.jpg',
   '商': 'img/era-bronze.jpg',
-  '周': 'img/era-bronze.jpg',
+  '周': 'img/era-zhou.jpg',
   '秦': 'img/era-qinhan.jpg',
-  '汉': 'img/era-qinhan.jpg',
+  '汉': 'img/era-han.jpg',
   '三国': 'img/era-weijin.jpg',
   '晋': 'img/era-weijin.jpg',
   '南北朝': 'img/era-weijin.jpg',
@@ -140,9 +140,9 @@ const ERA_BACKGROUNDS = {
   '唐': 'img/era-tang.jpg',
   '五代': 'img/era-tang.jpg',
   '宋': 'img/era-songyuan.jpg',
-  '元': 'img/era-songyuan.jpg',
+  '元': 'img/era-yuan.jpg',
   '明': 'img/era-mingqing.jpg',
-  '清': 'img/era-mingqing.jpg',
+  '清': 'img/era-qing.jpg',
   '民国': 'img/era-modern.jpg',
   '新中国': 'img/era-modern.jpg',
 };
