@@ -151,14 +151,7 @@ const ERA_BACKGROUNDS = {
 let bgLayerTurn = 1; // 当前显示的图层编号 (1 或 2)
 let currentEraBg = null;
 
-function preloadEraImages() {
-  const urls = [...new Set(Object.values(ERA_BACKGROUNDS))];
-  urls.forEach(url => {
-    const img = new Image();
-    img.src = url;
-  });
-}
-
+// 双层背景交叉淡入淡出
 function updateEraBackground() {
   if (dynastyData.length === 0) return;
 
@@ -731,7 +724,6 @@ trackEl.addEventListener('click', (e) => {
 (async () => {
   try {
     await initDB();
-    preloadEraImages();
     renderTimeline();
     updateEraBackground();
   } catch(err) {
