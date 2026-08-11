@@ -47,7 +47,7 @@ async function initDB() {
   loadingDetail.textContent = '加载 timeline.sqlite…';
   let resp;
   try {
-    resp = await fetch('timeline.sqlite?v=' + Date.now());
+    resp = await fetch('timeline.sqlite?v=2.7');
   } catch(_) {
     throw new Error('无法读取数据库文件，请通过本地服务器或 GitHub Pages 访问（直接双击打开无效）');
   }
@@ -127,32 +127,40 @@ let dynastyData = [];
 
 // ── 时代背景图映射 ──
 const ERA_BACKGROUNDS = {
-  '史前': 'img/prehistoric-bg.jpg',
-  '夏': 'img/era-xia.jpg',
-  '商': 'img/era-bronze.jpg',
-  '周': 'img/era-zhou.jpg',
-  '秦': 'img/era-qinhan.jpg',
-  '汉': 'img/era-han.jpg',
-  '三国': 'img/era-weijin.jpg',
-  '晋': 'img/era-weijin.jpg',
-  '南北朝': 'img/era-weijin.jpg',
-  '隋': 'img/era-tang.jpg',
-  '唐': 'img/era-tang.jpg',
-  '五代': 'img/era-tang.jpg',
-  '宋': 'img/era-songyuan.jpg',
-  '元': 'img/era-yuan.jpg',
-  '明': 'img/era-mingqing.jpg',
-  '清': 'img/era-qing.jpg',
-  '民国': 'img/era-republic.jpg',
-  '新中国': 'img/era-modern.jpg',
+  '史前': 'img/prehistoric-bg.webp',
+  '夏': 'img/era-xia.webp',
+  '商': 'img/era-bronze.webp',
+  '周': 'img/era-zhou.webp',
+  '秦': 'img/era-qinhan.webp',
+  '汉': 'img/era-han.webp',
+  '三国': 'img/era-weijin.webp',
+  '晋': 'img/era-weijin.webp',
+  '南北朝': 'img/era-weijin.webp',
+  '隋': 'img/era-tang.webp',
+  '唐': 'img/era-tang.webp',
+  '五代': 'img/era-tang.webp',
+  '宋': 'img/era-songyuan.webp',
+  '元': 'img/era-yuan.webp',
+  '明': 'img/era-mingqing.webp',
+  '清': 'img/era-qing.webp',
+  '民国': 'img/era-republic.webp',
+  '新中国': 'img/era-modern.webp',
 };
 
-// 双层背景交叉淡入淡出
-let bgLayerTurn = 1; // 当前显示的图层编号 (1 或 2)
+// 双层背景交叉淡入淡出（rAF 节流）
+let bgLayerTurn = 1;
 let currentEraBg = null;
-
-// 双层背景交叉淡入淡出
+let eraBgRafPending = false;
 function updateEraBackground() {
+  if (eraBgRafPending) return;
+  eraBgRafPending = true;
+  requestAnimationFrame(() => {
+    eraBgRafPending = false;
+    updateEraBackgroundNow();
+  });
+}
+
+function updateEraBackgroundNow() {
   if (dynastyData.length === 0) return;
 
   // 屏幕中心在 track 坐标系中的位置
@@ -315,16 +323,20 @@ function updateVisibleNodes() {
     }
   }
 
-  // 添加进入视口的节点
+  // 添加进入视口的节点（批量插入减少回流）
+  const frag = document.createDocumentFragment();
+  let hasNew = false;
   allEvents.forEach((ev, idx) => {
     if (ev.x >= leftBound && ev.x <= rightBound && !renderedNodes.has(idx)) {
       const temp = document.createElement('div');
       temp.innerHTML = buildNode(ev, ev.type, idx);
       const el = temp.firstElementChild;
-      track.appendChild(el);
+      frag.appendChild(el);
       renderedNodes.set(idx, el);
+      hasNew = true;
     }
   });
+  if (hasNew) track.appendChild(frag);
 }
 
 function scheduleVirtualUpdate() {
@@ -668,7 +680,11 @@ function addSearchMarker(ev) {
   }, 10000);
 }
 
-searchInput.addEventListener('input', performSearch);
+let searchDebounceTimer = null;
+searchInput.addEventListener('input', () => {
+  clearTimeout(searchDebounceTimer);
+  searchDebounceTimer = setTimeout(performSearch, 200);
+});
 searchInput.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') {
     const matches = performSearch();
