@@ -143,7 +143,7 @@ const ERA_BACKGROUNDS = {
   '元': 'img/era-yuan.jpg',
   '明': 'img/era-mingqing.jpg',
   '清': 'img/era-qing.jpg',
-  '民国': 'img/era-modern.jpg',
+  '民国': 'img/era-republic.jpg',
   '新中国': 'img/era-modern.jpg',
 };
 
