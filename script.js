@@ -47,7 +47,7 @@ async function initDB() {
   loadingDetail.textContent = '加载 timeline.sqlite…';
   let resp;
   try {
-    resp = await fetch('timeline.sqlite?v=2.8');
+    resp = await fetch('timeline.sqlite?v=2.9');
   } catch(_) {
     throw new Error('无法读取数据库文件，请通过本地服务器或 GitHub Pages 访问（直接双击打开无效）');
   }
@@ -604,30 +604,41 @@ trackEl.addEventListener('wheel', (e) => {
   }, 20);
 }, { passive: false });
 
-// ── 键盘导航（平滑滚动）──
-const ARROW_STEP = 500;
-let arrowKey = null, arrowHoldTimer = null;
+// ── 键盘导航（连续 RAF 平滑移动）──
+const ARROW_SPEED = 1.2; // 像素/毫秒
+let arrowRaf = null;
+let arrowDir = 0;
+
+function arrowLoop(timestamp) {
+  if (!arrowDir) { arrowRaf = null; return; }
+  if (!arrowLoop.lastTime) arrowLoop.lastTime = timestamp;
+  const dt = Math.min(timestamp - arrowLoop.lastTime, 50);
+  arrowLoop.lastTime = timestamp;
+  currentX += arrowDir * ARROW_SPEED * dt;
+  clampX();
+  applyTransform();
+  arrowRaf = requestAnimationFrame(arrowLoop);
+}
 
 document.addEventListener('keydown', (e) => {
   if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
   if (document.activeElement && document.activeElement.id === 'searchInput') return;
   e.preventDefault();
   cancelMomentum();
-  if (arrowKey === e.key) return;
-  arrowKey = e.key;
-  smoothScrollTo(currentX + (e.key === 'ArrowLeft' ? ARROW_STEP : -ARROW_STEP), 350);
-  if (arrowHoldTimer) clearInterval(arrowHoldTimer);
-  arrowHoldTimer = setInterval(() => {
-    smoothScrollTo(currentX + (arrowKey === 'ArrowLeft' ? ARROW_STEP * 0.6 : -ARROW_STEP * 0.6), 200);
-  }, 200);
+  cancelSmooth();
+  arrowDir = e.key === 'ArrowLeft' ? 1 : -1;
+  if (!arrowRaf) {
+    arrowLoop.lastTime = 0;
+    arrowRaf = requestAnimationFrame(arrowLoop);
+  }
 });
 
 document.addEventListener('keyup', (e) => {
   if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
-  if (arrowKey === e.key) {
-    arrowKey = null;
-    if (arrowHoldTimer) { clearInterval(arrowHoldTimer); arrowHoldTimer = null; }
-  }
+  arrowDir = 0;
+  // 松手后加一点惯性，感觉更顺滑
+  const vx = e.key === 'ArrowLeft' ? -2 : 2;
+  startMomentum(vx);
 });
 
 // ════════════════════════════════════════════════
