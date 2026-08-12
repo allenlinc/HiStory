@@ -521,6 +521,7 @@ body::after {
   z-index: 1;
   display: flex;
   align-items: center;
+  contain: layout style paint;
 }
 
 .track {
@@ -531,6 +532,7 @@ body::after {
   cursor: grab;
   will-change: transform;
   height: 100%;
+  contain: layout style paint;
 }
 .track:active { cursor: grabbing; }
 
@@ -561,6 +563,7 @@ body::after {
   cursor: pointer;
   pointer-events: auto;
   transition: filter 0.2s, transform 0.2s;
+  contain: layout style paint;
 }
 .dynasty-band:hover {
   filter: brightness(1.15) saturate(1.2);
