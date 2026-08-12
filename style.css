@@ -44,6 +44,8 @@ html, body {
   opacity: 0;
   transition: opacity 1.2s ease-in-out;
   pointer-events: none;
+  will-change: opacity;
+  contain: layout style paint;
 }
 .era-bg-layer.active {
   opacity: 0.2;
@@ -105,7 +107,7 @@ body::after {
   z-index: -1;
 }
 .header .sub {
-  font-family: 'Baloo 2', sans-serif;
+  font-family: system-ui, sans-serif;
   font-size: clamp(12px, 1.5vw, 15px);
   color: var(--ink-mute);
   letter-spacing: 0.25em;
@@ -270,7 +272,7 @@ body::after {
   border-radius: 0 0 14px 14px;
 }
 .search-result-item .result-year {
-  font-family: 'Baloo 2', sans-serif;
+  font-family: system-ui, sans-serif;
   font-size: 13px;
   font-weight: 700;
   color: var(--ink-mute);
@@ -352,7 +354,7 @@ body::after {
   letter-spacing: 0.15em;
   opacity: 0.6;
   pointer-events: none;
-  font-family: 'Baloo 2', 'Noto Sans SC', sans-serif;
+  font-family: system-ui, 'Noto Sans SC', sans-serif;
   font-weight: 500;
 }
 
@@ -362,7 +364,7 @@ body::after {
   bottom: 12px;
   right: 16px;
   z-index: 100;
-  font-family: 'Baloo 2', sans-serif;
+  font-family: system-ui, sans-serif;
   font-size: 12px;
   font-weight: 700;
   color: var(--ink-mute);
@@ -454,7 +456,7 @@ body::after {
 }
 .dynasty-modal-years {
   padding: 0 28px 12px;
-  font-family: 'Baloo 2', sans-serif;
+  font-family: system-ui, sans-serif;
   font-size: 15px;
   font-weight: 700;
   color: var(--ink-mute);
@@ -619,7 +621,7 @@ body::after {
   border-radius: 1px;
 }
 .year-tick .tick-label {
-  font-family: 'Baloo 2', sans-serif;
+  font-family: system-ui, sans-serif;
   font-size: 14px;
   font-weight: 700;
   color: var(--ink);
@@ -641,8 +643,7 @@ body::after {
   display: flex;
   flex-direction: column;
   align-items: center;
-  content-visibility: auto;
-  contain-intrinsic-size: 200px 350px;
+  contain: layout style paint;
 }
 .event-node.china { transform: translate(-50%, -100%); }
 .event-node.world { transform: translate(-50%, 0%); }
@@ -800,7 +801,7 @@ body::after {
   padding: 10px 14px 12px;
 }
 .card .year {
-  font-family: 'Baloo 2', sans-serif;
+  font-family: system-ui, sans-serif;
   font-size: 16px;
   font-weight: 800;
   letter-spacing: 0.02em;
@@ -955,7 +956,7 @@ body::after {
   border: 1.5px solid var(--world-light);
 }
 .event-modal-year {
-  font-family: 'Baloo 2', sans-serif;
+  font-family: system-ui, sans-serif;
   font-size: 15px;
   font-weight: 800;
   color: var(--ink-mute);
@@ -1043,20 +1044,13 @@ body::after {
   50% { transform: translateY(-18px) rotate(3deg); }
 }
 
-/* ── 卡片入场动画 ── */
+/* ── 卡片入场动画（仅首次加载，避免虚拟滚动时重复触发） ── */
 .event-node {
-  animation: cardBounceIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+  opacity: 0;
+  transition: opacity 0.25s ease;
 }
-@keyframes cardBounceIn {
-  0% { opacity: 0; transform: translate(-50%, -100%) scale(0.3); }
-  100% { opacity: 1; transform: translate(-50%, -100%) scale(1); }
-}
-.event-node.world {
-  animation-name: cardBounceInWorld;
-}
-@keyframes cardBounceInWorld {
-  0% { opacity: 0; transform: translate(-50%, 0%) scale(0.3); }
-  100% { opacity: 1; transform: translate(-50%, 0%) scale(1); }
+.event-node.rendered {
+  opacity: 1;
 }
 
 /* ── Emoji 徽章（无图片事件） ── */

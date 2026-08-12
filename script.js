@@ -147,64 +147,9 @@ const ERA_BACKGROUNDS = {
   '新中国': 'img/era-modern.webp',
 };
 
-// 双层背景交叉淡入淡出（rAF 节流）
+// 双层背景交叉淡入淡出
 let bgLayerTurn = 1;
 let currentEraBg = null;
-let eraBgRafPending = false;
-function updateEraBackground() {
-  if (eraBgRafPending) return;
-  eraBgRafPending = true;
-  requestAnimationFrame(() => {
-    eraBgRafPending = false;
-    updateEraBackgroundNow();
-  });
-}
-
-function updateEraBackgroundNow() {
-  if (dynastyData.length === 0) return;
-
-  // 屏幕中心在 track 坐标系中的位置
-  const centerX = -currentX + window.innerWidth / 2;
-
-  // 找到包含屏幕中心的朝代
-  let activeDynasty = null;
-  for (const d of dynastyData) {
-    const x1 = yearToX(d.start);
-    const x2 = yearToX(d.end);
-    if (centerX >= x1 && centerX <= x2) {
-      activeDynasty = d.name;
-      break;
-    }
-  }
-
-  // 如果不在任何朝代内，找最近的朝代
-  if (!activeDynasty) {
-    let minDist = Infinity;
-    for (const d of dynastyData) {
-      const x1 = yearToX(d.start);
-      const x2 = yearToX(d.end);
-      const mid = (x1 + x2) / 2;
-      const dist = Math.abs(centerX - mid);
-      if (dist < minDist) {
-        minDist = dist;
-        activeDynasty = d.name;
-      }
-    }
-  }
-
-  const bgUrl = ERA_BACKGROUNDS[activeDynasty];
-  if (!bgUrl || bgUrl === currentEraBg) return;
-
-  currentEraBg = bgUrl;
-  const nextLayer = bgLayerTurn === 1 ? 2 : 1;
-  const nextEl = document.getElementById(`eraBg${nextLayer}`);
-  const currentEl = document.getElementById(`eraBg${bgLayerTurn}`);
-
-  nextEl.style.backgroundImage = `url('${bgUrl}')`;
-  nextEl.classList.add('active');
-  if (currentEl) currentEl.classList.remove('active');
-  bgLayerTurn = nextLayer;
-}
 
 function buildAxis(dynasties) {
   dynastyData = dynasties;
@@ -303,10 +248,9 @@ function renderTimeline() {
 //  虚拟滚动：只渲染可视区域 ±2 屏内的事件卡片
 // ════════════════════════════════════════════════
 const renderedNodes = new Map();
-let virtualUpdatePending = false;
+let postFramePending = false;
 
 function updateVisibleNodes() {
-  virtualUpdatePending = false;
   const track = document.getElementById('timelineTrack');
   if (!track || allEvents.length === 0) return;
 
@@ -336,14 +280,74 @@ function updateVisibleNodes() {
       hasNew = true;
     }
   });
-  if (hasNew) track.appendChild(frag);
+  if (hasNew) {
+    track.appendChild(frag);
+    // 下一帧加上 rendered 类触发淡入动画
+    requestAnimationFrame(() => {
+      renderedNodes.forEach((el) => {
+        if (!el.classList.contains('rendered')) {
+          el.classList.add('rendered');
+        }
+      });
+    });
+  }
 }
 
-function scheduleVirtualUpdate() {
-  if (!virtualUpdatePending) {
-    virtualUpdatePending = true;
-    requestAnimationFrame(updateVisibleNodes);
+function updateEraBackgroundNow() {
+  if (dynastyData.length === 0) return;
+
+  // 屏幕中心在 track 坐标系中的位置
+  const centerX = -currentX + window.innerWidth / 2;
+
+  // 找到包含屏幕中心的朝代
+  let activeDynasty = null;
+  for (const d of dynastyData) {
+    const x1 = yearToX(d.start);
+    const x2 = yearToX(d.end);
+    if (centerX >= x1 && centerX <= x2) {
+      activeDynasty = d.name;
+      break;
+    }
   }
+
+  // 如果不在任何朝代内，找最近的朝代
+  if (!activeDynasty) {
+    let minDist = Infinity;
+    for (const d of dynastyData) {
+      const x1 = yearToX(d.start);
+      const x2 = yearToX(d.end);
+      const mid = (x1 + x2) / 2;
+      const dist = Math.abs(centerX - mid);
+      if (dist < minDist) {
+        minDist = dist;
+        activeDynasty = d.name;
+      }
+    }
+  }
+
+  const bgUrl = ERA_BACKGROUNDS[activeDynasty];
+  if (!bgUrl || bgUrl === currentEraBg) return;
+
+  currentEraBg = bgUrl;
+  const nextLayer = bgLayerTurn === 1 ? 2 : 1;
+  const nextEl = document.getElementById(`eraBg${nextLayer}`);
+  const currentEl = document.getElementById(`eraBg${bgLayerTurn}`);
+
+  nextEl.style.backgroundImage = `url('${bgUrl}')`;
+  nextEl.classList.add('active');
+  if (currentEl) currentEl.classList.remove('active');
+  bgLayerTurn = nextLayer;
+}
+
+// 统一的 RAF 调度：一帧内完成虚拟滚动 + 背景更新，避免两个独立 RAF 打架
+function schedulePostFrameUpdate() {
+  if (postFramePending) return;
+  postFramePending = true;
+  requestAnimationFrame(() => {
+    postFramePending = false;
+    updateVisibleNodes();
+    updateEraBackgroundNow();
+  });
 }
 
 // ════════════════════════════════════════════════
@@ -370,12 +374,11 @@ function clampX() {
   if (currentX < min) currentX = min;
 }
 
-function applyTransform() {
+function applyTransform(skipPostFrame) {
   const track = document.getElementById('timelineTrack');
   if (track) {
     track.style.transform = `translate3d(${currentX}px, 0, 0)`;
-    scheduleVirtualUpdate();
-    updateEraBackground();
+    if (!skipPostFrame) schedulePostFrameUpdate();
   }
 }
 
@@ -503,15 +506,19 @@ window.addEventListener('mousemove', (e) => {
   if (!isDragging) return;
   const dx = e.pageX - lastPointerX;
   currentX += dx;
-  clampX(); applyTransform();
+  clampX();
+  // 拖拽中只更新 transform，不触发虚拟滚动和背景更新（拖拽结束再一次性更新）
+  applyTransform(true);
   lastPointerX = e.pageX;
   dragHistory.push({ x: e.pageX, t: performance.now() });
   if (dragHistory.length > 6) dragHistory.shift();
-});
+}, { passive: true });
 window.addEventListener('mouseup', (e) => {
   if (!isDragging) return;
   isDragging = false;
   trackEl.style.cursor = 'grab';
+  // 拖拽结束，一次性更新虚拟节点和背景
+  schedulePostFrameUpdate();
   if (mouseDownTarget) {
     const moved = Math.abs(e.pageX - mouseDownX) + Math.abs(e.pageY - mouseDownY);
     if (moved < CLICK_THRESHOLD) openEventDetailByNode(mouseDownTarget);
@@ -551,13 +558,17 @@ trackEl.addEventListener('touchstart', (e) => {
 trackEl.addEventListener('touchmove', (e) => {
   if (!touchActive) return;
   currentX += e.touches[0].pageX - lastPointerX;
-  clampX(); applyTransform();
+  clampX();
+  // 触摸滑动中只更新 transform，不触发虚拟滚动和背景更新
+  applyTransform(true);
   lastPointerX = e.touches[0].pageX;
   touchHistory.push({ x: e.touches[0].pageX, t: performance.now() });
   if (touchHistory.length > 6) touchHistory.shift();
 }, { passive: true });
 trackEl.addEventListener('touchend', (e) => {
   touchActive = false;
+  // 触摸结束，一次性更新虚拟节点和背景
+  schedulePostFrameUpdate();
   if (touchDownTarget) {
     const t = e.changedTouches[0];
     const moved = Math.abs(t.pageX - touchDownX) + Math.abs(t.pageY - touchDownY);
@@ -741,7 +752,7 @@ trackEl.addEventListener('click', (e) => {
   try {
     await initDB();
     renderTimeline();
-    updateEraBackground();
+    updateEraBackgroundNow();
   } catch(err) {
     console.error('[DB] 初始化失败:', err);
     document.getElementById('loadingDetail').textContent = '错误: ' + err.message;

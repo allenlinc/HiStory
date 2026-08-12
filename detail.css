@@ -173,7 +173,7 @@ body::before {
   border: 2px solid var(--gold-soft);
 }
 .detail-badge.year-badge {
-  font-family: 'Baloo 2', sans-serif;
+  font-family: system-ui, sans-serif;
   font-weight: 800;
   color: var(--ink-soft);
   background: var(--bg-deep);
@@ -188,7 +188,7 @@ body::before {
   margin-bottom: 8px;
 }
 .detail-subtitle {
-  font-family: 'Baloo 2', sans-serif;
+  font-family: system-ui, sans-serif;
   font-size: 16px;
   color: var(--ink-mute);
   letter-spacing: 0.1em;
@@ -250,7 +250,7 @@ body::before {
   font-size: 13px;
   color: var(--ink-mute);
   margin-bottom: 6px;
-  font-family: 'Baloo 2', sans-serif;
+  font-family: system-ui, sans-serif;
   font-weight: 700;
   letter-spacing: 0.05em;
 }
@@ -291,7 +291,7 @@ body::before {
 .related-item-dot.china { background: var(--china); box-shadow: 0 0 0 2px var(--china-deep); }
 .related-item-dot.world { background: var(--world); box-shadow: 0 0 0 2px var(--world-deep); }
 .related-item-year {
-  font-family: 'Baloo 2', sans-serif;
+  font-family: system-ui, sans-serif;
   font-size: 14px;
   font-weight: 800;
   color: var(--ink-mute);
@@ -350,7 +350,7 @@ body::before {
   margin-bottom: 2px;
 }
 .dynasty-preview-years {
-  font-family: 'Baloo 2', sans-serif;
+  font-family: system-ui, sans-serif;
   font-size: 13px;
   color: var(--ink-mute);
   font-weight: 700;
