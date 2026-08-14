@@ -47,7 +47,7 @@ async function initDB() {
   loadingDetail.textContent = '加载 timeline.sqlite…';
   let resp;
   try {
-    resp = await fetch('timeline.sqlite?v=2.9');
+    resp = await fetch('timeline.sqlite?v=3.0');
   } catch(_) {
     throw new Error('无法读取数据库文件，请通过本地服务器或 GitHub Pages 访问（直接双击打开无效）');
   }
