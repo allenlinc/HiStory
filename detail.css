@@ -412,3 +412,54 @@ body::before {
   .related-item-year { min-width: 56px; font-size: 12px; }
   .related-item-title { font-size: 14px; }
 }
+
+/* ── 暗色模式 ── */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1A1A2E;
+    --bg-deep: #16213E;
+    --paper: #252540;
+    --ink: #E8E0D0;
+    --ink-soft: #B0A590;
+    --ink-mute: #7A7060;
+    --line: #4A4060;
+    --line-soft: #3A3050;
+    --china: #F07070;
+    --china-deep: #D05050;
+    --china-light: #FF9999;
+    --world: #5A9FE8;
+    --world-deep: #3B7EC0;
+    --world-light: #8AC8F8;
+    --gold: #F5C840;
+    --gold-soft: #D4A820;
+  }
+
+  body { background: var(--bg); }
+  body::before { opacity: 0.3; }
+
+  .detail-nav {
+    background: rgba(26,26,46,0.92);
+    border-bottom-color: var(--line);
+  }
+
+  .back-btn { background: var(--paper); box-shadow: 0 4px 14px rgba(0,0,0,0.3); }
+  .back-btn:hover { box-shadow: 0 6px 20px rgba(245,200,64,0.3); }
+
+  .detail-hero { background: var(--paper); box-shadow: 0 12px 40px rgba(0,0,0,0.3); }
+  .detail-hero-bg.china { background: linear-gradient(135deg, #3A2020 0%, #2A1820 60%, #241818 100%); }
+  .detail-hero-bg.world { background: linear-gradient(135deg, #182030 0%, #1A2840 60%, #182238 100%); }
+  .detail-hero-bg.dynasty { background: linear-gradient(135deg, #2A2820 0%, #262218 60%, #221E18 100%); }
+  .detail-hero-bg::after { background: linear-gradient(to bottom, transparent, var(--paper)); }
+
+  .detail-section { background: var(--paper); box-shadow: 0 6px 20px rgba(0,0,0,0.2); }
+
+  .info-card { background: var(--bg); }
+
+  .related-item { background: var(--bg); }
+  .related-item:hover { background: var(--bg-deep); }
+  .related-item.current { background: rgba(245,200,64,0.08); }
+
+  .detail-badge.year-badge { background: var(--bg-deep); }
+
+  .loading-overlay { background: var(--bg); }
+}

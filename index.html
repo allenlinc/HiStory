@@ -4,55 +4,68 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>历史时间轴 · 中外对照</title>
+<meta name="description" content="中国史与世界史对照时间轴，从公元前4000年到公元2026年，可视化对比中外历史大事件。拖拽浏览、点击卡片查看详情、搜索定位事件。">
+<meta name="keywords" content="历史时间轴,中国历史,世界历史,中外对照,历史年表,朝代">
+<meta name="author" content="HiStory">
+<meta property="og:title" content="历史时间轴 · 中外对照">
+<meta property="og:description" content="中国史与世界史对照时间轴，从公元前4000年到公元2026年，可视化对比中外历史大事件。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://his.top8.site/">
+<meta property="og:site_name" content="HiStory 历史时间轴">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#FFF8F0">
+<meta name="color-scheme" content="light dark">
+<link rel="manifest" href="manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Noto+Sans+SC:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Noto+Sans+SC:wght@400;700&display=swap" media="print" onload="this.media='all';this.onload=null">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <!-- 时代背景图层（双层交叉淡入淡出） -->
-<div class="era-bg-layer" id="eraBg1"></div>
-<div class="era-bg-layer" id="eraBg2"></div>
+<div class="era-bg-layer" id="eraBg1" aria-hidden="true"></div>
+<div class="era-bg-layer" id="eraBg2" aria-hidden="true"></div>
 
 <!-- 浮动装饰 -->
-<div class="floating-deco cloud-1">☁️</div>
-<div class="floating-deco cloud-2">☁️</div>
-<div class="floating-deco cloud-3">☁️</div>
+<div class="floating-deco cloud-1" aria-hidden="true">☁️</div>
+<div class="floating-deco cloud-2" aria-hidden="true">☁️</div>
+<div class="floating-deco cloud-3" aria-hidden="true">☁️</div>
 
-<div class="header">
-  <h1><span class="sparkle left">✦</span> 历史<span class="accent">时间轴</span> · 中外对照 <span class="sparkle right">✦</span></h1>
+<header class="header">
+  <h1><span class="sparkle left" aria-hidden="true">✦</span> 历史<span class="accent">时间轴</span> · 中外对照 <span class="sparkle right" aria-hidden="true">✦</span></h1>
   <div class="sub">CHINA & WORLD · A JOURNEY THROUGH TIME</div>
-</div>
+</header>
 
-<div class="zone-label zone-china">中国历史</div>
-<div class="zone-label zone-world">世界历史</div>
+<div class="zone-label zone-china" aria-hidden="true">中国历史</div>
+<div class="zone-label zone-world" aria-hidden="true">世界历史</div>
 
-<button class="toggle-btn" id="toggleBtn" aria-label="切换循环滚动">
-  <span class="toggle-icon"></span>
+<button class="toggle-btn" id="toggleBtn" aria-label="切换自动滚动">
+  <span class="toggle-icon" aria-hidden="true"></span>
   <span class="toggle-text">已暂停</span>
 </button>
 
-<div class="search-bar" id="searchBar">
-  <input type="text" id="searchInput" placeholder="搜索历史事件…" autocomplete="off">
+<div class="search-bar" id="searchBar" role="search">
+  <input type="search" id="searchInput" placeholder="搜索历史事件（支持拼音）…" autocomplete="off" aria-label="搜索历史事件">
   <button id="searchBtn" aria-label="搜索">🔍</button>
-  <div class="search-results" id="searchResults"></div>
+  <div class="search-results" id="searchResults" role="listbox"></div>
 </div>
 
-<div class="timeline-wrapper">
-  <div class="track" id="timelineTrack"></div>
-</div>
+<main class="timeline-wrapper" aria-label="历史时间轴">
+  <div class="track" id="timelineTrack" role="application" aria-roledescription="时间轴" aria-label="横向滚动时间轴"></div>
+</main>
 
-<div class="footer-hint">← 拖拽浏览 · 点击卡片或朝代查看详情 · 鼠标滚轮可滑动 →</div>
+<footer class="footer-hint" aria-hidden="true">← 拖拽浏览 · 点击卡片或朝代查看详情 · 鼠标滚轮可滑动 · 方向键导航 →</footer>
 
-<div class="version-tag">v3.2</div>
+<div class="version-tag" aria-hidden="true">v3.3</div>
 
 <div class="loading-overlay" id="loadingOverlay">
-  <div class="loading-emoji">📜</div>
+  <div class="loading-emoji" aria-hidden="true">📜</div>
   <div class="loading-text">正在打开历史画卷</div>
   <div class="loading-detail" id="loadingDetail">初始化 sql.js…</div>
 </div>
 
+<script src="common.js"></script>
 <script src="script.js"></script>
 </body>
 </html>

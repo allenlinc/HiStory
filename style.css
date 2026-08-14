@@ -1138,3 +1138,78 @@ body::after {
 }
 .event-node.china .card .card-tag { color: var(--china); border: 1.5px solid var(--china-light); }
 .event-node.world .card .card-tag { color: var(--world); border: 1.5px solid var(--world-light); }
+
+/* ── 暗色模式 ── */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1A1A2E;
+    --bg-deep: #16213E;
+    --paper: #252540;
+    --ink: #E8E0D0;
+    --ink-soft: #B0A590;
+    --ink-mute: #7A7060;
+    --line: #4A4060;
+    --line-soft: #3A3050;
+    --china: #F07070;
+    --china-deep: #D05050;
+    --china-light: #FF9999;
+    --china-glow: rgba(240, 112, 112, 0.15);
+    --world: #5A9FE8;
+    --world-deep: #3B7EC0;
+    --world-light: #8AC8F8;
+    --world-glow: rgba(90, 159, 232, 0.15);
+    --gold: #F5C840;
+    --gold-soft: #D4A820;
+    --green: #6CC86C;
+    --purple: #AB7BD4;
+  }
+
+  .header { background: linear-gradient(180deg, var(--bg) 0%, rgba(26,26,46,0.9) 70%, transparent 100%); }
+
+  .toggle-btn { background: var(--paper); box-shadow: 0 4px 14px rgba(0,0,0,0.3); }
+  .toggle-btn:hover { box-shadow: 0 6px 20px rgba(245,200,64,0.3); }
+
+  .search-bar input { background: var(--paper); box-shadow: 0 4px 14px rgba(0,0,0,0.3); }
+  .search-bar button { background: var(--paper); box-shadow: 0 4px 14px rgba(0,0,0,0.3); }
+  .search-results { background: var(--paper); box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+
+  .dynasty-modal-card { background: var(--paper); }
+  .dynasty-modal-backdrop { background: rgba(0,0,0,0.6); }
+  .dynasty-modal-close { background: rgba(255,255,255,0.15); color: var(--ink); }
+
+  .event-modal-card { background: var(--paper); }
+  .event-modal-backdrop { background: rgba(0,0,0,0.6); }
+  .event-modal-close { background: rgba(255,255,255,0.15); color: var(--ink); }
+
+  .event-node .card { background: var(--paper); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+  .event-node:hover .card { box-shadow: 0 8px 24px rgba(0,0,0,0.35); }
+  .event-node.active .card { box-shadow: 0 12px 36px rgba(0,0,0,0.4); }
+
+  .card .card-img-wrap::after {
+    background: linear-gradient(to bottom, transparent, var(--paper));
+  }
+
+  .card .card-emoji { background: linear-gradient(135deg, var(--bg-deep) 0%, #2A2040 100%); }
+  .event-node.china .card-emoji { background: linear-gradient(135deg, #3A2020 0%, #2A1820 100%); }
+  .event-node.world .card-emoji { background: linear-gradient(135deg, #182030 0%, #1A2840 100%); }
+
+  .card .card-tag { background: rgba(255,255,255,0.1); }
+
+  .dynasty-band .dynasty-name {
+    background: rgba(37,37,64,0.85);
+    border-color: rgba(255,255,255,0.15);
+    text-shadow: -1.5px -1.5px 0 #252540, 1.5px -1.5px 0 #252540, -1.5px 1.5px 0 #252540, 1.5px 1.5px 0 #252540, 0 2px 5px rgba(0,0,0,0.4);
+  }
+
+  .year-tick .tick-label { background: var(--paper); border-color: var(--line); }
+
+  .event-modal-hero.china { background: linear-gradient(135deg, #3A2020 0%, #2A1820 100%); }
+  .event-modal-hero.world { background: linear-gradient(135deg, #182030 0%, #1A2840 100%); }
+
+  .search-result-item:hover { background: var(--bg-deep); }
+
+  .loading-overlay { background: var(--bg); }
+
+  .event-node.china .card::after { background: var(--paper); }
+  .event-node.world .card::after { background: var(--paper); }
+}

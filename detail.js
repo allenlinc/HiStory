@@ -1,127 +1,7 @@
-let db = null;
-let SQL_module = null;
-
-// ── 动态加载 sql.js ──
-const SQL_CDN_BASES = [
-  'https://cdn.jsdelivr.net/npm/sql.js@1.8.0/dist/',
-  'https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/',
-  'https://unpkg.com/sql.js@1.8.0/dist/',
-];
-
-function loadScript(src) {
-  return new Promise((resolve, reject) => {
-    const s = document.createElement('script');
-    s.src = src;
-    s.onload = resolve;
-    s.onerror = () => reject(new Error('Failed: ' + src));
-    document.head.appendChild(s);
-  });
-}
-
-async function loadSqlJs() {
-  try {
-    await loadScript('sql-wasm.js');
-    if (typeof initSqlJs === 'function') return 'local';
-  } catch (_) {}
-  for (const base of SQL_CDN_BASES) {
-    try {
-      await loadScript(base + 'sql-wasm.js');
-      if (typeof initSqlJs === 'function') return base;
-    } catch (_) {}
-  }
-  throw new Error('所有 CDN 均无法加载 sql.js');
-}
-
-async function initDB() {
-  const loadedBase = await loadSqlJs();
-  SQL_module = await initSqlJs({
-    locateFile: f => loadedBase === 'local' ? f : loadedBase + f
-  });
-  const resp = await fetch('timeline.sqlite?v=' + Date.now());
-  if (!resp.ok) throw new Error(`无法加载数据库 (HTTP ${resp.status})`);
-  const buf = await resp.arrayBuffer();
-  db = new SQL_module.Database(new Uint8Array(buf));
-}
-
-// ── 查询函数 ──
-function queryEvents(type) {
-  const results = [];
-  const stmt = db.prepare(
-    `SELECT year_label AS year, year_num AS yearNum, title, description AS "desc",
-            image, emoji, detail, type
-     FROM events WHERE type = ? ORDER BY year_num`
-  );
-  stmt.bind([type]);
-  while (stmt.step()) { results.push(stmt.getAsObject()); }
-  stmt.free();
-  return results;
-}
-
-function queryAllEvents() {
-  const results = [];
-  const stmt = db.prepare(
-    `SELECT year_label AS year, year_num AS yearNum, title, description AS "desc",
-            image, emoji, detail, type
-     FROM events ORDER BY year_num`
-  );
-  while (stmt.step()) { results.push(stmt.getAsObject()); }
-  stmt.free();
-  return results;
-}
-
-function queryDynasties() {
-  const results = [];
-  const stmt = db.prepare(
-    `SELECT name, start_year AS start, end_year AS end, color, detail FROM dynasties ORDER BY start_year`
-  );
-  while (stmt.step()) { results.push(stmt.getAsObject()); }
-  stmt.free();
-  return results;
-}
-
-// ── 朝代 emoji 映射 ──
-const DYNASTY_EMOJI = {
-  '史前': '🦴', '夏': '🏺', '商': '🐢', '周': '📜',
-  '秦': '⚔️', '汉': '🐉', '三国': '🗡️', '晋': '🍵',
-  '南北朝': '🏯', '隋': '🌉', '唐': '🎐', '五代': '🔥',
-  '宋': '🎨', '元': '🐎', '明': '🏮', '清': '👑',
-  '民国': '🌅', '新中国': '🚀',
-};
-
-// ── 工具函数 ──
-function formatYear(y) {
-  if (y < 0) return '前' + Math.abs(y) + '年';
-  return y === 0 ? '元年' : y + '年';
-}
-
-function formatYearShort(y) {
-  if (y < 0) return '前' + Math.abs(y);
-  return y === 0 ? '元年' : String(y);
-}
-
-function findDynastyForYear(dynasties, yearNum) {
-  for (const d of dynasties) {
-    if (yearNum >= d.start && yearNum <= d.end) return d;
-  }
-  return null;
-}
-
-function escapeHtml(text) {
-  if (!text) return '';
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-}
-
-// ── 构建事件索引（与 timeline 页面一致）──
-function buildAllEvents() {
-  const china = queryEvents('china');
-  const world = queryEvents('world');
-  return [
-    ...china.map(e => ({ ...e, type: 'china' })),
-    ...world.map(e => ({ ...e, type: 'world' }))
-  ];
-}
+// ════════════════════════════════════════════════
+//  detail.js — HiStory 详情页
+//  common.js 必须在之前加载
+// ════════════════════════════════════════════════
 
 // ── 渲染事件详情 ──
 function renderEventDetail(allEvents, dynasties, idx) {
@@ -139,12 +19,11 @@ function renderEventDetail(allEvents, dynasties, idx) {
     .filter((e, i) => i !== idx && Math.abs(e.yearNum - ev.yearNum) <= 200)
     .sort((a, b) => a.yearNum - b.yearNum);
 
-  // 详细的描述文本
   const longDesc = ev.detail || ev.desc || '暂无详细介绍';
 
   const heroBg = ev.image
     ? `<img src="${ev.image}" alt="${escapeHtml(ev.title)}">`
-    : `<span class="detail-hero-emoji">${emoji}</span>`;
+    : `<span class="detail-hero-emoji" aria-hidden="true">${emoji}</span>`;
 
   let html = `
     <div class="detail-hero">
@@ -161,7 +40,7 @@ function renderEventDetail(allEvents, dynasties, idx) {
 
     <section class="detail-section">
       <div class="section-title">
-        <span class="section-icon">📖</span>
+        <span class="section-icon" aria-hidden="true">📖</span>
         <span>详细介绍</span>
       </div>
       <div class="detail-text"><p>${escapeHtml(longDesc)}</p></div>
@@ -188,7 +67,7 @@ function renderEventDetail(allEvents, dynasties, idx) {
   infoCards.push(`
     <div class="info-card">
       <div class="info-card-label">📅 距今约</div>
-      <div class="info-card-value">${2026 - ev.yearNum} 年</div>
+      <div class="info-card-value">${CURRENT_YEAR - ev.yearNum} 年</div>
     </div>
   `);
   infoCards.push(`
@@ -209,7 +88,7 @@ function renderEventDetail(allEvents, dynasties, idx) {
   html += `
     <section class="detail-section">
       <div class="section-title">
-        <span class="section-icon">📋</span>
+        <span class="section-icon" aria-hidden="true">📋</span>
         <span>基本信息</span>
       </div>
       <div class="info-grid">${infoCards.join('')}</div>
@@ -227,7 +106,7 @@ function renderEventDetail(allEvents, dynasties, idx) {
           <span class="related-item-dot ${rTypeClass}"></span>
           <span class="related-item-year">${escapeHtml(r.year)}</span>
           <span class="related-item-title">${escapeHtml(r.title)}</span>
-          <span class="related-item-arrow">→</span>
+          <span class="related-item-arrow" aria-hidden="true">→</span>
         </a>
       `;
     }).join('');
@@ -235,7 +114,7 @@ function renderEventDetail(allEvents, dynasties, idx) {
     html += `
       <section class="detail-section">
         <div class="section-title">
-          <span class="section-icon">⏳</span>
+          <span class="section-icon" aria-hidden="true">⏳</span>
           <span>同期大事（前后200年）</span>
         </div>
         <div class="related-list">${relatedHtml}</div>
@@ -254,7 +133,6 @@ function renderDynastyDetail(allEvents, dynasties, idx) {
   const emoji = DYNASTY_EMOJI[d.name] || '🏛️';
   const duration = d.end - d.start;
 
-  // 该朝代期间的所有事件
   const periodEvents = allEvents
     .filter(e => e.yearNum >= d.start && e.yearNum <= d.end)
     .sort((a, b) => a.yearNum - b.yearNum);
@@ -264,7 +142,7 @@ function renderDynastyDetail(allEvents, dynasties, idx) {
   let html = `
     <div class="detail-hero">
       <div class="detail-hero-bg dynasty" style="background: linear-gradient(135deg, ${d.color}22 0%, ${d.color}11 60%, ${d.color}08 100%);">
-        <span class="detail-hero-emoji">${emoji}</span>
+        <span class="detail-hero-emoji" aria-hidden="true">${emoji}</span>
       </div>
       <div class="detail-hero-body">
         <div class="detail-badges">
@@ -278,14 +156,13 @@ function renderDynastyDetail(allEvents, dynasties, idx) {
 
     <section class="detail-section">
       <div class="section-title">
-        <span class="section-icon">📖</span>
+        <span class="section-icon" aria-hidden="true">📖</span>
         <span>朝代介绍</span>
       </div>
       <div class="detail-text"><p>${escapeHtml(longDesc)}</p></div>
     </section>
   `;
 
-  // 信息卡片
   const infoCards = [
     `<div class="info-card">
       <div class="info-card-label">📅 起始</div>
@@ -308,14 +185,13 @@ function renderDynastyDetail(allEvents, dynasties, idx) {
   html += `
     <section class="detail-section">
       <div class="section-title">
-        <span class="section-icon">📋</span>
+        <span class="section-icon" aria-hidden="true">📋</span>
         <span>基本信息</span>
       </div>
       <div class="info-grid">${infoCards.join('')}</div>
     </section>
   `;
 
-  // 该时期的大事件
   if (periodEvents.length > 0) {
     const eventsHtml = periodEvents.map(e => {
       const eIdx = allEvents.indexOf(e);
@@ -325,7 +201,7 @@ function renderDynastyDetail(allEvents, dynasties, idx) {
           <span class="related-item-dot ${eTypeClass}"></span>
           <span class="related-item-year">${escapeHtml(e.year)}</span>
           <span class="related-item-title">${escapeHtml(e.title)}</span>
-          <span class="related-item-arrow">→</span>
+          <span class="related-item-arrow" aria-hidden="true">→</span>
         </a>
       `;
     }).join('');
@@ -333,7 +209,7 @@ function renderDynastyDetail(allEvents, dynasties, idx) {
     html += `
       <section class="detail-section">
         <div class="section-title">
-          <span class="section-icon">📜</span>
+          <span class="section-icon" aria-hidden="true">📜</span>
           <span>这一时期的大事件</span>
         </div>
         <div class="related-list">${eventsHtml}</div>
@@ -351,7 +227,7 @@ function renderDynastyDetail(allEvents, dynasties, idx) {
         <span class="related-item-dot" style="background:${prevDynasty.color};box-shadow:0 0 0 2px rgba(0,0,0,0.15);"></span>
         <span class="related-item-year">前一个</span>
         <span class="related-item-title">${DYNASTY_EMOJI[prevDynasty.name] || ''} ${escapeHtml(prevDynasty.name)}</span>
-        <span class="related-item-arrow">→</span>
+        <span class="related-item-arrow" aria-hidden="true">→</span>
       </a>
     `);
   }
@@ -361,7 +237,7 @@ function renderDynastyDetail(allEvents, dynasties, idx) {
         <span class="related-item-dot" style="background:${nextDynasty.color};box-shadow:0 0 0 2px rgba(0,0,0,0.15);"></span>
         <span class="related-item-year">后一个</span>
         <span class="related-item-title">${DYNASTY_EMOJI[nextDynasty.name] || ''} ${escapeHtml(nextDynasty.name)}</span>
-        <span class="related-item-arrow">→</span>
+        <span class="related-item-arrow" aria-hidden="true">→</span>
       </a>
     `);
   }
@@ -369,7 +245,7 @@ function renderDynastyDetail(allEvents, dynasties, idx) {
     html += `
       <section class="detail-section">
         <div class="section-title">
-          <span class="section-icon">🔄</span>
+          <span class="section-icon" aria-hidden="true">🔄</span>
           <span>前后朝代</span>
         </div>
         <div class="related-list">${neighbors.join('')}</div>
@@ -383,10 +259,10 @@ function renderDynastyDetail(allEvents, dynasties, idx) {
 function renderError() {
   return `
     <div class="error-state">
-      <div class="error-emoji">🔍</div>
+      <div class="error-emoji" aria-hidden="true">🔍</div>
       <div class="error-text">没有找到这条记录<br>请从时间轴页面进入</div>
       <a href="index.html" class="back-btn" style="display:inline-flex;">
-        <span class="back-arrow">←</span>
+        <span class="back-arrow" aria-hidden="true">←</span>
         <span>返回时间轴</span>
       </a>
     </div>
@@ -395,30 +271,18 @@ function renderError() {
 
 // ── 启动 ──
 (async () => {
-  try {
-    await initDB();
-    const params = new URLSearchParams(window.location.search);
-    const type = params.get('type') || 'event';
-    const idx = parseInt(params.get('idx')) || 0;
+  const loadingOverlay = document.getElementById('loadingOverlay');
+  const content = document.getElementById('detailContent');
 
-    const allEvents = buildAllEvents();
-    const dynasties = queryDynasties();
-
-    const content = document.getElementById('detailContent');
-    if (type === 'dynasty') {
-      content.innerHTML = renderDynastyDetail(allEvents, dynasties, idx);
-    } else {
-      content.innerHTML = renderEventDetail(allEvents, dynasties, idx);
-    }
-    content.style.display = 'block';
-    document.getElementById('loadingOverlay').classList.add('hidden');
-  } catch (err) {
-    console.error('[Detail] 初始化失败:', err);
-    const content = document.getElementById('detailContent');
+  function showError(msg) {
     content.innerHTML = `
       <div class="error-state">
-        <div class="error-emoji">😢</div>
-        <div class="error-text">加载失败: ${escapeHtml(err.message)}</div>
+        <div class="error-emoji" aria-hidden="true">😢</div>
+        <div class="error-text">加载失败: ${escapeHtml(msg)}</div>
+        <button onclick="location.reload()" class="back-btn" style="display:inline-flex;margin-right:12px;">
+          <span class="back-arrow">🔄</span>
+          <span>重试</span>
+        </button>
         <a href="index.html" class="back-btn" style="display:inline-flex;">
           <span class="back-arrow">←</span>
           <span>返回时间轴</span>
@@ -426,6 +290,27 @@ function renderError() {
       </div>
     `;
     content.style.display = 'block';
-    document.getElementById('loadingOverlay').classList.add('hidden');
+    loadingOverlay.classList.add('hidden');
+  }
+
+  try {
+    await initDB('3.3');
+    const params = new URLSearchParams(window.location.search);
+    const type = params.get('type') || 'event';
+    const idx = parseInt(params.get('idx')) || 0;
+
+    const allEvents = buildAllEvents();
+    const dynasties = queryDynasties();
+
+    if (type === 'dynasty') {
+      content.innerHTML = renderDynastyDetail(allEvents, dynasties, idx);
+    } else {
+      content.innerHTML = renderEventDetail(allEvents, dynasties, idx);
+    }
+    content.style.display = 'block';
+    loadingOverlay.classList.add('hidden');
+  } catch (err) {
+    console.error('[Detail] 初始化失败:', err);
+    showError(err.message);
   }
 })();

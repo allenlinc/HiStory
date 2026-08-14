@@ -4,24 +4,28 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>历史详情 · 中外对照</title>
+<meta name="description" content="历史事件详情，包含详细介绍、同期大事、所属朝代等关联信息。">
+<meta name="theme-color" content="#FFF8F0">
+<meta name="color-scheme" content="light dark">
+<link rel="manifest" href="manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Baloo+2:wght@500;700;800&family=Noto+Sans+SC:wght@300;400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Baloo+2:wght@500;700;800&family=Noto+Sans+SC:wght@300;400;600;700&display=swap" media="print" onload="this.media='all';this.onload=null">
 <link rel="stylesheet" href="detail.css">
 </head>
 <body>
 
 <div class="detail-page" id="detailPage">
-  <nav class="detail-nav">
-    <a href="index.html" class="back-btn">
-      <span class="back-arrow">←</span>
+  <nav class="detail-nav" aria-label="页面导航">
+    <a href="index.html" class="back-btn" aria-label="返回时间轴">
+      <span class="back-arrow" aria-hidden="true">←</span>
       <span>返回时间轴</span>
     </a>
     <div class="nav-brand">📖 历史详情</div>
   </nav>
 
   <div class="loading-overlay" id="loadingOverlay">
-    <div class="loading-emoji">📜</div>
+    <div class="loading-emoji" aria-hidden="true">📜</div>
     <div class="loading-text">正在加载详情…</div>
   </div>
 
@@ -30,6 +34,7 @@
   </main>
 </div>
 
+<script src="common.js"></script>
 <script src="detail.js"></script>
 </body>
 </html>

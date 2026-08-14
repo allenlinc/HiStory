@@ -1,86 +1,41 @@
-let db = null;
-let SQL_module = null;
+// ════════════════════════════════════════════════
+//  script.js — HiStory 时间轴主页面
+//  common.js 必须在之前加载
+// ════════════════════════════════════════════════
+
 let allEvents = [];
 
-// 数据统一存储在 timeline.sqlite 中，本文件不再保留冗余数据副本。
-// 修改历史事件/朝代请直接编辑数据库文件。
-
-// ── 动态加载 sql.js ──
-const SQL_CDN_BASES = [
-  'https://cdn.jsdelivr.net/npm/sql.js@1.8.0/dist/',
-  'https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/',
-  'https://unpkg.com/sql.js@1.8.0/dist/',
-];
-
-function loadScript(src) {
-  return new Promise((resolve, reject) => {
-    const s = document.createElement('script');
-    s.src = src;
-    s.onload = resolve;
-    s.onerror = () => reject(new Error('Failed: ' + src));
-    document.head.appendChild(s);
+// ── 拼音搜索映射（常用汉字 → 拼音首字母）──
+const PINYIN_MAP = (() => {
+  const m = {};
+  const list = [
+    '夏xià=x|商shāng=s|周zhōu=z|秦qín=q|汉hàn=h|三国sān=三s|晋jìn=j|南北朝nán=南n|隋suí=s|唐táng=t|五代wǔ=五w|宋sòng=s|元yuán=y|明míng=m|清qīng=q|民国mín=民m|新中国xīn=新x',
+    '史前shǐ=史s|元年yuán=元y|中国zhōng=中z|世界shì=世s',
+    '战争zhàn=战z|革命gé=革g|建立jiàn=建j|灭亡miè=灭m|统一tǒng=统t|发明fā=发f|发现fā=发f|诞生dàn=诞d|逝世shì=逝s',
+    '皇帝huáng=皇h|帝国dì=帝d|王朝wáng=王w|文明wén=文w|文化wén=文w|科学kē=科k|技术jì=技j|艺术yì=艺y|哲学zhé=哲z|宗教zōng=宗z',
+    '朝cháo=朝c|代dài=代d|年nián=年n|世纪shì=世s|公元gōng=公g',
+  ];
+  list.forEach(line => {
+    line.split('|').forEach(item => {
+      const segs = item.split('=');
+      if (segs.length >= 2) {
+        const key = segs[0].replace(/[a-zà-ü]+$/i, '');
+        const py = segs[segs.length - 1];
+        if (key && py) m[key] = py;
+      }
+    });
   });
-}
+  return m;
+})();
 
-async function loadSqlJs() {
-  try {
-    await loadScript('sql-wasm.js');
-    if (typeof initSqlJs === 'function') return 'local';
-  } catch(_) {}
-  for (const base of SQL_CDN_BASES) {
-    try {
-      await loadScript(base + 'sql-wasm.js');
-      if (typeof initSqlJs === 'function') return base;
-    } catch(_) {}
+function getPinyinFirstChar(str) {
+  let result = '';
+  for (const ch of str) {
+    if (PINYIN_MAP[ch]) { result += PINYIN_MAP[ch]; }
+    else if (/[a-zA-Z0-9]/.test(ch)) { result += ch.toLowerCase(); }
+    else { result += ch; }
   }
-  throw new Error('所有 CDN 均无法加载 sql.js');
-}
-
-async function initDB() {
-  const loadingDetail = document.getElementById('loadingDetail');
-  loadingDetail.textContent = '加载 sql.js WASM 引擎…';
-  const loadedBase = await loadSqlJs();
-  SQL_module = await initSqlJs({
-    locateFile: f => loadedBase === 'local' ? f : loadedBase + f
-  });
-
-  loadingDetail.textContent = '加载 timeline.sqlite…';
-  let resp;
-  try {
-    resp = await fetch('timeline.sqlite?v=3.2');
-  } catch(_) {
-    throw new Error('无法读取数据库文件，请通过本地服务器或 GitHub Pages 访问（直接双击打开无效）');
-  }
-  if (!resp.ok) {
-    throw new Error(`无法加载数据库 (HTTP ${resp.status})`);
-  }
-  const buf = await resp.arrayBuffer();
-  db = new SQL_module.Database(new Uint8Array(buf));
-  const test = db.exec("SELECT count(*) FROM events");
-  if (!test.length) {
-    throw new Error('数据库为空或已损坏');
-  }
-  loadingDetail.textContent = '数据库加载完成';
-}
-
-function queryEvents(type) {
-  const results = [];
-  const stmt = db.prepare(
-    `SELECT year_label AS year, year_num AS yearNum, title, description AS "desc", image, emoji
-     FROM events WHERE type = ? ORDER BY year_num`
-  );
-  stmt.bind([type]);
-  while (stmt.step()) { results.push(stmt.getAsObject()); }
-  stmt.free();
-  return results;
-}
-
-function queryDynasties() {
-  const results = [];
-  const stmt = db.prepare(`SELECT name, start_year AS start, end_year AS end, color, detail FROM dynasties ORDER BY start_year`);
-  while (stmt.step()) { results.push(stmt.getAsObject()); }
-  stmt.free();
-  return results;
+  return result;
 }
 
 // ════════════════════════════════════════════════
@@ -92,9 +47,8 @@ const USABLE = TOTAL_WIDTH - PADDING * 2;
 const SPLIT_YEAR = 1368;
 const RATIO_BEFORE = 0.55;
 const RATIO_AFTER = 0.45;
-
-let minYear = -4000;
-let maxYear = 2026;
+const minYear = -4000;
+const maxYear = 2026;
 
 function yearToX(yearNum) {
   if (yearNum <= SPLIT_YEAR) {
@@ -108,20 +62,6 @@ function yearToX(yearNum) {
 const yearTicks = [];
 for (let y = -4000; y <= 1300; y += 250) { yearTicks.push(y); }
 for (let y = 1400; y <= 2050; y += 50) { yearTicks.push(y); }
-
-function formatYear(y) {
-  if (y < 0) return '前' + Math.abs(y);
-  return y === 0 ? '元年' : String(y);
-}
-
-// 朝代卡通 emoji 映射
-const DYNASTY_EMOJI = {
-  '史前': '🦴', '夏': '🏺', '商': '🐢', '周': '📜',
-  '秦': '⚔️', '汉': '🐉', '三国': '🗡️', '晋': '🍵',
-  '南北朝': '🏯', '隋': '🌉', '唐': '🎐', '五代': '🔥',
-  '宋': '🎨', '元': '🐎', '明': '🏮', '清': '👑',
-  '民国': '🌅', '新中国': '🚀',
-};
 
 let dynastyData = [];
 
@@ -160,15 +100,15 @@ function buildAxis(dynasties) {
     const w = x2 - x1;
     const showName = w > 80;
     const emoji = DYNASTY_EMOJI[d.name] || '🏛️';
-    html += `<div class="dynasty-band" data-dynasty-idx="${i}" style="left:${x1}px;width:${w}px;background:${d.color};opacity:0.6;">
-      ${showName ? `<span class="dynasty-name"><span class="dynasty-emoji">${emoji}</span>${d.name}</span>` : ''}
+    html += `<div class="dynasty-band" data-dynasty-idx="${i}" style="left:${x1}px;width:${w}px;background:${d.color};opacity:0.6;" role="button" tabindex="0" aria-label="${d.name} 朝代详情">
+      ${showName ? `<span class="dynasty-name"><span class="dynasty-emoji" aria-hidden="true">${emoji}</span>${d.name}</span>` : ''}
     </div>`;
   });
   yearTicks.forEach(y => {
     const x = yearToX(y);
-    html += `<div class="year-tick" style="left:${x}px;">
+    html += `<div class="year-tick" style="left:${x}px;" aria-hidden="true">
       <div class="tick-mark"></div>
-      <div class="tick-label">${formatYear(y)}</div>
+      <div class="tick-label">${formatYearShort(y)}</div>
     </div>`;
   });
   html += '</div>';
@@ -177,11 +117,11 @@ function buildAxis(dynasties) {
 
 function buildNode(ev, type, idx) {
   const mediaHtml = ev.image
-    ? `<div class="card-img-wrap"><img class="card-img" src="${ev.image}" alt="${ev.title}" loading="lazy"></div>`
-    : (ev.emoji ? `<div class="card-emoji"><span>${ev.emoji}</span></div>` : '');
+    ? `<div class="card-img-wrap"><img class="card-img" src="${ev.image}" alt="${escapeHtml(ev.title)}" loading="lazy"></div>`
+    : (ev.emoji ? `<div class="card-emoji"><span aria-hidden="true">${ev.emoji}</span></div>` : '');
   const tagText = type === 'china' ? '中国' : '世界';
   return `
-    <div class="event-node ${type}" data-event-idx="${idx}" style="left: ${ev.x}px;">
+    <div class="event-node ${type}" data-event-idx="${idx}" style="left: ${ev.x}px;" role="button" tabindex="0" aria-label="${tagText}: ${ev.title}（${ev.year}）">
       <div class="card">
         <div class="card-tag">${tagText}</div>
         ${mediaHtml}
@@ -200,13 +140,11 @@ function buildNode(ev, type, idx) {
 function spreadCollisions(events, minGap) {
   if (events.length < 2) return;
   events.sort((a, b) => a.x - b.x);
-  // 正向扫描：确保最小间距
   for (let i = 1; i < events.length; i++) {
     if (events[i].x - events[i - 1].x < minGap) {
       events[i].x = events[i - 1].x + minGap;
     }
   }
-  // 反向扫描：防止整体右偏
   for (let i = events.length - 2; i >= 0; i--) {
     if (events[i + 1].x - events[i].x < minGap) {
       events[i].x = events[i + 1].x - minGap;
@@ -219,13 +157,9 @@ function renderTimeline() {
   const worldEvents = queryEvents('world');
   const dynasties = queryDynasties();
 
-  // 保持 minYear/maxYear 固定（-4000 ~ 2026），与年份刻度生成范围一致
-  // 避免数据范围变化导致刻度和朝代带位置错乱
-
   chinaEvents.forEach(e => { e.x = yearToX(e.yearNum); });
   worldEvents.forEach(e => { e.x = yearToX(e.yearNum); });
 
-  // 防碰撞：中国事件朝上、世界事件朝下，分别处理同类型重叠
   spreadCollisions(chinaEvents, 210);
   spreadCollisions(worldEvents, 210);
 
@@ -237,8 +171,6 @@ function renderTimeline() {
   const track = document.getElementById('timelineTrack');
   track.innerHTML = buildAxis(dynasties);
   track.style.width = TOTAL_WIDTH + 'px';
-  // 缓存 trackEl 引用供 applyTransform/updateVisibleNodes 使用
-  // trackEl 是全局变量，已在交互控制区域声明
   if (!trackEl) trackEl = track;
 
   renderedNodes.clear();
@@ -260,7 +192,6 @@ function updateVisibleNodes() {
   const leftBound = -currentX - margin;
   const rightBound = -currentX + window.innerWidth + margin;
 
-  // 移除离开视口的节点
   for (const [idx, el] of renderedNodes) {
     const ev = allEvents[idx];
     if (!ev || ev.x < leftBound || ev.x > rightBound) {
@@ -269,7 +200,6 @@ function updateVisibleNodes() {
     }
   }
 
-  // 添加进入视口的节点（批量插入减少回流）
   const frag = document.createDocumentFragment();
   let hasNew = false;
   allEvents.forEach((ev, idx) => {
@@ -284,7 +214,6 @@ function updateVisibleNodes() {
   });
   if (hasNew) {
     trackEl.appendChild(frag);
-    // 下一帧加上 rendered 类触发淡入动画
     requestAnimationFrame(() => {
       renderedNodes.forEach((el) => {
         if (!el.classList.contains('rendered')) {
@@ -298,10 +227,8 @@ function updateVisibleNodes() {
 function updateEraBackgroundNow() {
   if (dynastyData.length === 0) return;
 
-  // 屏幕中心在 track 坐标系中的位置
   const centerX = -currentX + window.innerWidth / 2;
 
-  // 找到包含屏幕中心的朝代
   let activeDynasty = null;
   for (const d of dynastyData) {
     const x1 = yearToX(d.start);
@@ -312,7 +239,6 @@ function updateEraBackgroundNow() {
     }
   }
 
-  // 如果不在任何朝代内，找最近的朝代
   if (!activeDynasty) {
     let minDist = Infinity;
     for (const d of dynastyData) {
@@ -341,7 +267,6 @@ function updateEraBackgroundNow() {
   bgLayerTurn = nextLayer;
 }
 
-// 统一的 RAF 调度：一帧内完成虚拟滚动 + 背景更新，避免两个独立 RAF 打架
 function schedulePostFrameUpdate() {
   if (postFramePending) return;
   postFramePending = true;
@@ -383,7 +308,6 @@ function applyTransform(skipPostFrame) {
   }
 }
 
-// ── 平滑滚动引擎 ──
 let smoothRaf = null;
 function cancelSmooth() { if (smoothRaf) { cancelAnimationFrame(smoothRaf); smoothRaf = null; } }
 
@@ -414,7 +338,6 @@ function smoothScrollTo(targetX, duration = 400) {
   smoothRaf = requestAnimationFrame(step);
 }
 
-// ── 惯性滑动 ──
 let momentumRaf = null;
 function cancelMomentum() { if (momentumRaf) { cancelAnimationFrame(momentumRaf); momentumRaf = null; } }
 
@@ -428,21 +351,20 @@ function startMomentum(vx) {
   function step() {
     if (Math.abs(velocity) < MIN_VELOCITY) {
       momentumRaf = null;
-      schedulePostFrameUpdate(); // 惯性结束，一次性更新
+      schedulePostFrameUpdate();
       return;
     }
     currentX += velocity;
     const min = getMinX();
     if (currentX > MAX_X) { currentX = MAX_X; velocity *= -0.4; if (Math.abs(velocity) < 1) { momentumRaf = null; schedulePostFrameUpdate(); return; } }
     else if (currentX < min) { currentX = min; velocity *= -0.4; if (Math.abs(velocity) < 1) { momentumRaf = null; schedulePostFrameUpdate(); return; } }
-    applyTransform(true); // 惯性中跳过虚拟滚动和背景更新
+    applyTransform(true);
     velocity *= FRICTION;
     momentumRaf = requestAnimationFrame(step);
   }
   momentumRaf = requestAnimationFrame(step);
 }
 
-// ── 自动滚动 ──
 function scrollLoop(timestamp) {
   if (!autoScroll || isDragging) { rafId = null; return; }
   if (!lastTime) lastTime = timestamp;
@@ -451,7 +373,6 @@ function scrollLoop(timestamp) {
   if (!isHovering) {
     currentX -= SCROLL_SPEED * dt;
     clampX();
-    // 自动滚动中跳过虚拟滚动和背景更新，每 10 帧更新一次
     if (!scrollLoop.frameCount) scrollLoop.frameCount = 0;
     scrollLoop.frameCount++;
     applyTransform(scrollLoop.frameCount % 10 !== 0);
@@ -489,8 +410,6 @@ trackEl.addEventListener('mouseleave', () => { isHovering = false; });
 
 let mouseDownX = 0, mouseDownY = 0, mouseDownTarget = null;
 const CLICK_THRESHOLD = 6;
-
-// 拖拽速度追踪
 let dragHistory = [];
 
 function openEventDetailByNode(node) {
@@ -516,7 +435,6 @@ window.addEventListener('mousemove', (e) => {
   const dx = e.pageX - lastPointerX;
   currentX += dx;
   clampX();
-  // 拖拽中只更新 transform，不触发虚拟滚动和背景更新（拖拽结束再一次性更新）
   applyTransform(true);
   lastPointerX = e.pageX;
   dragHistory.push({ x: e.pageX, t: performance.now() });
@@ -526,13 +444,11 @@ window.addEventListener('mouseup', (e) => {
   if (!isDragging) return;
   isDragging = false;
   trackEl.style.cursor = 'grab';
-  // 拖拽结束，一次性更新虚拟节点和背景
   schedulePostFrameUpdate();
   if (mouseDownTarget) {
     const moved = Math.abs(e.pageX - mouseDownX) + Math.abs(e.pageY - mouseDownY);
     if (moved < CLICK_THRESHOLD) openEventDetailByNode(mouseDownTarget);
   }
-  // 计算释放时的速度，触发惯性滑动
   if (dragHistory.length >= 2) {
     const last = dragHistory[dragHistory.length - 1];
     const first = dragHistory[0];
@@ -568,7 +484,6 @@ trackEl.addEventListener('touchmove', (e) => {
   if (!touchActive) return;
   currentX += e.touches[0].pageX - lastPointerX;
   clampX();
-  // 触摸滑动中只更新 transform，不触发虚拟滚动和背景更新
   applyTransform(true);
   lastPointerX = e.touches[0].pageX;
   touchHistory.push({ x: e.touches[0].pageX, t: performance.now() });
@@ -576,14 +491,12 @@ trackEl.addEventListener('touchmove', (e) => {
 }, { passive: true });
 trackEl.addEventListener('touchend', (e) => {
   touchActive = false;
-  // 触摸结束，一次性更新虚拟节点和背景
   schedulePostFrameUpdate();
   if (touchDownTarget) {
     const t = e.changedTouches[0];
     const moved = Math.abs(t.pageX - touchDownX) + Math.abs(t.pageY - touchDownY);
     if (moved < CLICK_THRESHOLD) openEventDetailByNode(touchDownTarget);
   }
-  // 触摸惯性
   if (touchHistory.length >= 2) {
     const last = touchHistory[touchHistory.length - 1];
     const first = touchHistory[0];
@@ -614,7 +527,7 @@ trackEl.addEventListener('wheel', (e) => {
 }, { passive: false });
 
 // ── 键盘导航（连续 RAF 平滑移动）──
-const ARROW_SPEED = 1.2; // 像素/毫秒
+const ARROW_SPEED = 1.2;
 let arrowRaf = null;
 let arrowDir = 0;
 
@@ -625,7 +538,7 @@ function arrowLoop(timestamp) {
   arrowLoop.lastTime = timestamp;
   currentX += arrowDir * ARROW_SPEED * dt;
   clampX();
-  applyTransform(true); // 移动中跳过虚拟滚动和背景更新
+  applyTransform(true);
   arrowRaf = requestAnimationFrame(arrowLoop);
 }
 
@@ -645,15 +558,13 @@ document.addEventListener('keydown', (e) => {
 document.addEventListener('keyup', (e) => {
   if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
   arrowDir = 0;
-  // 松手后一次性更新虚拟节点和背景
   schedulePostFrameUpdate();
-  // 加一点惯性，感觉更顺滑（方向与按键方向一致）
   const vx = e.key === 'ArrowLeft' ? 2 : -2;
   startMomentum(vx);
 });
 
 // ════════════════════════════════════════════════
-//  搜索功能
+//  搜索功能（支持拼音）
 // ════════════════════════════════════════════════
 const searchInput = document.getElementById('searchInput');
 const searchResults = document.getElementById('searchResults');
@@ -662,24 +573,29 @@ const searchBtn = document.getElementById('searchBtn');
 function performSearch() {
   const q = searchInput.value.trim().toLowerCase();
   if (!q) { searchResults.classList.remove('show'); return []; }
-  const matches = allEvents.filter(e =>
-    String(e.title).toLowerCase().includes(q) ||
-    String(e.year).toLowerCase().includes(q) ||
-    String(e.desc).toLowerCase().includes(q)
-  );
+
+  const matches = allEvents.filter(e => {
+    const title = String(e.title).toLowerCase();
+    const year = String(e.year).toLowerCase();
+    const desc = String(e.desc || '').toLowerCase();
+    const pinyin = getPinyinFirstChar(e.title);
+    return title.includes(q) || year.includes(q) || desc.includes(q) || pinyin.includes(q);
+  });
+
   if (matches.length === 0) {
     searchResults.innerHTML = '<div class="search-no-result">没找到呀 😢</div>';
     searchResults.classList.add('show');
     return [];
   }
   searchResults.innerHTML = matches.map((e, i) => `
-    <div class="search-result-item" data-index="${i}">
+    <div class="search-result-item" data-index="${i}" role="option" aria-selected="false">
       <span class="result-year">${e.year}</span>
       <span class="result-title">${e.title}</span>
       <span class="result-type">${e.type === 'china' ? '🇨🇳' : '🌍'}</span>
     </div>
   `).join('');
   searchResults.classList.add('show');
+  searchResults.setAttribute('role', 'listbox');
   return matches;
 }
 
@@ -699,6 +615,7 @@ function addSearchMarker(ev) {
   const marker = document.createElement('div');
   marker.className = 'search-marker';
   marker.style.left = ev.x + 'px';
+  marker.setAttribute('aria-label', '搜索结果位置');
   marker.innerHTML = `
     <div class="marker-pulse"></div>
     <div class="marker-label">📍 在这里！</div>
@@ -770,13 +687,31 @@ trackEl.addEventListener('click', (e) => {
 //  启动
 // ════════════════════════════════════════════════
 (async () => {
+  const loadingDetail = document.getElementById('loadingDetail');
+  const loadingOverlay = document.getElementById('loadingOverlay');
+
+  function showError(msg) {
+    loadingDetail.innerHTML = `
+      <span style="color:var(--china);">${escapeHtml(msg)}</span>
+      <br><br>
+      <button onclick="location.reload()" style="
+        padding:10px 24px;font-family:'ZCOOL KuaiLe',sans-serif;font-size:16px;
+        border:2.5px solid var(--gold);border-radius:24px;background:var(--paper);
+        color:var(--ink);cursor:pointer;transition:all 0.2s;
+      " onmouseover="this.style.background='var(--gold-soft)'"
+         onmouseout="this.style.background='var(--paper)'"
+      >🔄 重试</button>
+    `;
+  }
+
   try {
-    await initDB();
+    loadingDetail.textContent = '加载 sql.js WASM 引擎…';
+    await initDB('3.3');
+    loadingDetail.textContent = '数据库加载完成';
     renderTimeline();
+    loadingOverlay.classList.add('hidden');
   } catch(err) {
     console.error('[DB] 初始化失败:', err);
-    document.getElementById('loadingDetail').textContent = '错误: ' + err.message;
-    return;
+    showError(err.message);
   }
-  document.getElementById('loadingOverlay').classList.add('hidden');
 })();
