@@ -47,7 +47,7 @@ async function initDB() {
   loadingDetail.textContent = '加载 timeline.sqlite…';
   let resp;
   try {
-    resp = await fetch('timeline.sqlite?v=3.1');
+    resp = await fetch('timeline.sqlite?v=3.2');
   } catch(_) {
     throw new Error('无法读取数据库文件，请通过本地服务器或 GitHub Pages 访问（直接双击打开无效）');
   }
@@ -647,8 +647,8 @@ document.addEventListener('keyup', (e) => {
   arrowDir = 0;
   // 松手后一次性更新虚拟节点和背景
   schedulePostFrameUpdate();
-  // 加一点惯性，感觉更顺滑
-  const vx = e.key === 'ArrowLeft' ? -2 : 2;
+  // 加一点惯性，感觉更顺滑（方向与按键方向一致）
+  const vx = e.key === 'ArrowLeft' ? 2 : -2;
   startMomentum(vx);
 });
 
