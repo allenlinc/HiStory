@@ -47,7 +47,7 @@ async function initDB() {
   loadingDetail.textContent = '加载 timeline.sqlite…';
   let resp;
   try {
-    resp = await fetch('timeline.sqlite?v=3.0');
+    resp = await fetch('timeline.sqlite?v=3.1');
   } catch(_) {
     throw new Error('无法读取数据库文件，请通过本地服务器或 GitHub Pages 访问（直接双击打开无效）');
   }
@@ -237,6 +237,9 @@ function renderTimeline() {
   const track = document.getElementById('timelineTrack');
   track.innerHTML = buildAxis(dynasties);
   track.style.width = TOTAL_WIDTH + 'px';
+  // 缓存 trackEl 引用供 applyTransform/updateVisibleNodes 使用
+  // trackEl 是全局变量，已在交互控制区域声明
+  if (!trackEl) trackEl = track;
 
   renderedNodes.clear();
   currentX = -400;
@@ -251,8 +254,7 @@ const renderedNodes = new Map();
 let postFramePending = false;
 
 function updateVisibleNodes() {
-  const track = document.getElementById('timelineTrack');
-  if (!track || allEvents.length === 0) return;
+  if (!trackEl || allEvents.length === 0) return;
 
   const margin = window.innerWidth * 2;
   const leftBound = -currentX - margin;
@@ -281,7 +283,7 @@ function updateVisibleNodes() {
     }
   });
   if (hasNew) {
-    track.appendChild(frag);
+    trackEl.appendChild(frag);
     // 下一帧加上 rendered 类触发淡入动画
     requestAnimationFrame(() => {
       renderedNodes.forEach((el) => {
@@ -375,9 +377,8 @@ function clampX() {
 }
 
 function applyTransform(skipPostFrame) {
-  const track = document.getElementById('timelineTrack');
-  if (track) {
-    track.style.transform = `translate3d(${currentX}px, 0, 0)`;
+  if (trackEl) {
+    trackEl.style.transform = `translate3d(${currentX}px, 0, 0)`;
     if (!skipPostFrame) schedulePostFrameUpdate();
   }
 }
@@ -425,12 +426,16 @@ function startMomentum(vx) {
   const MIN_VELOCITY = 0.3;
 
   function step() {
-    if (Math.abs(velocity) < MIN_VELOCITY) { momentumRaf = null; return; }
+    if (Math.abs(velocity) < MIN_VELOCITY) {
+      momentumRaf = null;
+      schedulePostFrameUpdate(); // 惯性结束，一次性更新
+      return;
+    }
     currentX += velocity;
     const min = getMinX();
-    if (currentX > MAX_X) { currentX = MAX_X; velocity *= -0.4; if (Math.abs(velocity) < 1) { momentumRaf = null; return; } }
-    else if (currentX < min) { currentX = min; velocity *= -0.4; if (Math.abs(velocity) < 1) { momentumRaf = null; return; } }
-    applyTransform();
+    if (currentX > MAX_X) { currentX = MAX_X; velocity *= -0.4; if (Math.abs(velocity) < 1) { momentumRaf = null; schedulePostFrameUpdate(); return; } }
+    else if (currentX < min) { currentX = min; velocity *= -0.4; if (Math.abs(velocity) < 1) { momentumRaf = null; schedulePostFrameUpdate(); return; } }
+    applyTransform(true); // 惯性中跳过虚拟滚动和背景更新
     velocity *= FRICTION;
     momentumRaf = requestAnimationFrame(step);
   }
@@ -446,12 +451,16 @@ function scrollLoop(timestamp) {
   if (!isHovering) {
     currentX -= SCROLL_SPEED * dt;
     clampX();
-    applyTransform();
+    // 自动滚动中跳过虚拟滚动和背景更新，每 10 帧更新一次
+    if (!scrollLoop.frameCount) scrollLoop.frameCount = 0;
+    scrollLoop.frameCount++;
+    applyTransform(scrollLoop.frameCount % 10 !== 0);
     if (currentX <= getMinX()) {
       autoScroll = false;
       toggleBtn.classList.remove('active');
       toggleText.textContent = '已暂停';
       rafId = null;
+      schedulePostFrameUpdate();
       return;
     }
   }
@@ -616,7 +625,7 @@ function arrowLoop(timestamp) {
   arrowLoop.lastTime = timestamp;
   currentX += arrowDir * ARROW_SPEED * dt;
   clampX();
-  applyTransform();
+  applyTransform(true); // 移动中跳过虚拟滚动和背景更新
   arrowRaf = requestAnimationFrame(arrowLoop);
 }
 
@@ -636,7 +645,9 @@ document.addEventListener('keydown', (e) => {
 document.addEventListener('keyup', (e) => {
   if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
   arrowDir = 0;
-  // 松手后加一点惯性，感觉更顺滑
+  // 松手后一次性更新虚拟节点和背景
+  schedulePostFrameUpdate();
+  // 加一点惯性，感觉更顺滑
   const vx = e.key === 'ArrowLeft' ? -2 : 2;
   startMomentum(vx);
 });
@@ -685,7 +696,6 @@ function addSearchMarker(ev) {
   document.querySelectorAll('.search-marker').forEach(m => m.remove());
   if (searchMarkerTimer) { clearTimeout(searchMarkerTimer); searchMarkerTimer = null; }
 
-  const track = document.getElementById('timelineTrack');
   const marker = document.createElement('div');
   marker.className = 'search-marker';
   marker.style.left = ev.x + 'px';
@@ -693,7 +703,7 @@ function addSearchMarker(ev) {
     <div class="marker-pulse"></div>
     <div class="marker-label">📍 在这里！</div>
   `;
-  track.appendChild(marker);
+  trackEl.appendChild(marker);
 
   searchMarkerTimer = setTimeout(() => {
     marker.classList.add('fading');
@@ -763,7 +773,6 @@ trackEl.addEventListener('click', (e) => {
   try {
     await initDB();
     renderTimeline();
-    updateEraBackgroundNow();
   } catch(err) {
     console.error('[DB] 初始化失败:', err);
     document.getElementById('loadingDetail').textContent = '错误: ' + err.message;
