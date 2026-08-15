@@ -706,7 +706,7 @@ trackEl.addEventListener('click', (e) => {
 
   try {
     loadingDetail.textContent = '加载 sql.js WASM 引擎…';
-    await initDB('3.4');
+    await initDB('3.5');
     loadingDetail.textContent = '数据库加载完成';
     renderTimeline();
     loadingOverlay.classList.add('hidden');

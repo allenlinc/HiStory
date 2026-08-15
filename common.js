@@ -40,7 +40,7 @@ async function loadSqlJs() {
 let db = null;
 let SQL_module = null;
 
-async function initDB(cacheVersion = '3.4') {
+async function initDB(cacheVersion = '3.5') {
   const loadedBase = await loadSqlJs();
   SQL_module = await initSqlJs({
     locateFile: f => loadedBase === 'local' ? f : loadedBase + f
